@@ -60,7 +60,7 @@ public class MainActivity extends BaseActivity implements IMsgManager {
         Paras.Wiidth = getResources().getDisplayMetrics().widthPixels;
         Paras.Height = getResources().getDisplayMetrics().heightPixels;
         checkPermission();
-        // 测试提交
+
         SPUnit spUnit = new SPUnit(MainActivity.this);
         DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
         device_type=findViewById(R.id.device_type);
