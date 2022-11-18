@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="..\:/Android_project/MultimediaV2/app/src/main/res/drawable-v24/ic_launcher_foreground.xml" value="0.2805" />
+        <entry key="..\:/Android_project/MultimediaV2/app/src/main/res/drawable/ic_baseline_expand_more_24.xml" value="0.2805" />
+        <entry key="..\:/Android_project/MultimediaV2/app/src/main/res/drawable/ic_launcher_background.xml" value="0.2805" />
+        <entry key="..\:/Android_project/MultimediaV2/app/src/main/res/drawable/rounded_btu.xml" value="0.289" />
+        <entry key="..\:/Android_project/MultimediaV2/app/src/main/res/drawable/rounded_rectangle.xml" value="0.2805" />
+        <entry key="..\:/Android_project/MultimediaV2/app/src/main/res/drawable/rounded_spinner.xml" value="0.2805" />
+        <entry key="..\:/Android_project/MultimediaV2/app/src/main/res/drawable/rounded_switch.xml" value="0.29" />
+        <entry key="..\:/Android_project/MultimediaV2/app/src/main/res/layout/activity_main.xml" value="0.16666666666666666" />
+        <entry key="..\:/Android_project/MultimediaV2/app/src/main/res/layout/activity_show.xml" value="0.31190269331016507" />
+        <entry key="..\:/Android_project/MultimediaV2/app/src/main/res/xml/network_security_config.xml" value="0.1015625" />
+      </map>
+    </option>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="Android Studio default JDK" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/build/classes" />
+  </component>
+  <component name="ProjectType">
+    <option name="id" value="Android" />
+  </component>
+</project>

@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">MultimediaV2</string>
+    <string name="device_name">设备名称：</string>
+    <string name="device_type">设备类型：</string>
+    <string name="device_port">端口：</string>
+    <string name="device_ip">IP：</string>
+    <string name="btu_save">保存</string>
+    <string name="btu_tts">TTS设置</string>
+    <string name="switch_text">开关机设置:</string>
+    <string name="time_text">周一 00:00开 24:00关\n
+    周二 00:00开 24:00关\n
+    周三 00:00开 24:00关\n
+    周四 00:00开 24:00关\n
+    周五 00:00开 24:00关\n
+    周六 00:00开 24:00关\n
+    周日 00:00开 24:00关
+    </string>
+</resources>
