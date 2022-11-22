@@ -2,6 +2,7 @@ package Modules;
 
 import android.content.Context;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -18,15 +19,47 @@ public class TextSpeaker2 implements TextToSpeech.OnInitListener {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                float v = Paras.volume / 100f;
-                if (v < 0 || v > 1)
-                    v = 1f;
+                try {
+                    float v = Paras.volume / 100f;
+                    if (v < 0 || v > 1)
+                        v = 1f;
+                    HashMap params = new HashMap();
+                    String strV = String.valueOf(v);
+                    params.put(TextToSpeech.Engine.KEY_PARAM_VOLUME, strV);
+                    params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "param");
+                    toSpeech.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                        int i=0;
+                        @Override
+                        public void onStart(String s) {//开始播放
+                            Paras.msgManager.SendMsg("开始播放：onStart");
+                            LogHelper.Error("onStart开始播放");
+                        }
+                        @Override
+                        public void onDone(String s) {//完成之后
+                            LogHelper.Error("onDone完成播放");
+                            //可循环播放
+                        /*if (i<3){
+                            toSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, params);
+                            i++;
+                        }*/
+                        }
+                        @Override
+                        public void onError(String s) {//播放错误的处理
+                            LogHelper.Error("语音播放错误"+s);
+                        }
+                    });
+                    try {
+                        int res=toSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, params);
+                        Paras.msgManager.SendMsg("播报："+res);
+                    } catch (Exception e) {
+                        Paras.msgManager.SendMsg("播报失败："+e);
+                        LogHelper.Error("语音返回错误"+e);
+                    }
 
-                HashMap params = new HashMap();
-                String strV = String.valueOf(v);
+                } catch (Exception e) {
+                    LogHelper.Error("语音播报失败："+e);
+                }
 
-                params.put(TextToSpeech.Engine.KEY_PARAM_VOLUME, strV);
-                toSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, params);
             }
         }).start();
     }

@@ -1,57 +1,71 @@
 package com.example.multimediav2;
 
 
-import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Binder;
 import android.os.IBinder;
-import android.os.PowerManager;
+import android.util.Log;
 
-import androidx.annotation.Nullable;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class AppService extends Service
 {
-    private PowerManager.WakeLock wakeLock = null;
+    private static final String TAG = "AppService";
+    private static final long RESTART_DELAY = 10 * 1000; // 多少时间后重启检测(1小时)
+    private MyBinder mBinder;
 
-    @Nullable
+    // 此对象用于绑定的service与调用者之间的通信
+    public class MyBinder extends Binder {
+
+        /**
+         * 获取service实例
+         * @return
+         */
+        public AppService getService() {
+            return AppService.this;
+        }
+
+        /**
+         * 启动app重启任务
+         */
+        public void startRestartTask(final Context context) {
+            TimerTask task = new TimerTask() {
+                @Override
+                public void run() {
+                    Intent intent = getPackageManager().getLaunchIntentForPackage(
+                            getApplication().getPackageName());
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                    System.exit(0);
+                }
+            };
+
+            Timer timer = new Timer();
+            timer.schedule(task, RESTART_DELAY);
+        }
+    }
+
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        // Create MyBinder object
+        if (mBinder == null) {
+            mBinder = new MyBinder();
+        }
+        return mBinder;
     }
 
-    @SuppressLint("InvalidWakeLockTag")
     @Override
-    public void onCreate() {
-        super.onCreate();
-        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, AppService.class.getName());
-        wakeLock.acquire();
-        /*new Thread(new Runnable() {
-            @Override
-            public void run() {
-                {
-                    Paras.powerManager.setSystemTime(Paras.appContext);
-                    try {
-                        Thread.sleep(Paras.time_start_listen_power * 1000);
-                        Paras.powerManager.StartListen();
-                    } catch (Exception ex) {
-                        LogHelper.Error(ex);
-                    }
-                }
-            }
-        }).start();*/
+    public boolean onUnbind(Intent intent) {
+        Log.e(TAG, "onUnbind");
+        return super.onUnbind(intent);
     }
+
     @Override
     public void onDestroy() {
-        if (wakeLock != null) {
-            wakeLock.release();
-            wakeLock = null;
-        }
+        Log.e(TAG,"onDestroy");
         super.onDestroy();
-    }
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        return super.onStartCommand(intent, flags, startId);
     }
 }
