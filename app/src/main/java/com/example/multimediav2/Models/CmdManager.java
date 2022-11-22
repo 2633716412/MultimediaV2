@@ -3,6 +3,7 @@ package com.example.multimediav2.Models;
 import android.app.ActivityManager;
 import android.app.Service;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Handler;
 
@@ -68,6 +69,7 @@ public class CmdManager {
                     jsonObject.put("device_name",deviceData.getDevice_name());
                     jsonObject.put("device_ip",deviceData.getDevice_ip());
                     jsonObject.put("mac",deviceData.getMac());
+                    jsonObject.put("os","");
                     String jsonStr= HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/sava",jsonObject.toString());
                     JSONObject object= new JSONObject(jsonStr);
                     boolean res=object.getBoolean("success");
@@ -200,16 +202,14 @@ public class CmdManager {
                                                             }
                                                             //Paras.msgManager.SendMsg("开始更新程序:" + dir + "/" + fn);
                                                             LogHelper.Debug("CMD1008 Path：" + dir + "/" + fn);
-                                                            //海康的方法
+                                                            //更新包的方法
                                                             Paras.powerManager.Install(dir + "/" + fn);
-
                                                             Paras.msgManager.SendMsg("下载完成！");
                                                         } catch (Exception ex) {
                                                             LogHelper.Error("CMD1008(1) 更新程序异常：" + ex);
                                                         }
                                                     }
                                                 });
-
                                             } catch (Exception ex) {
                                                 LogHelper.Error("CMD1008(2) 异常：" + ex);
                                             }
@@ -406,6 +406,30 @@ public class CmdManager {
         });
         PollingUtil shutPolling=new PollingUtil(handler);
         shutPolling.startPolling(shutThread,1800000,true);
+    }
+
+    public static void openApplicationFromBackground(Context context) {
+        Intent intent;
+        ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningTaskInfo> list = am.getRunningTasks(100);
+        if (!list.isEmpty() && list.get(0).topActivity.getPackageName().equals(context.getPackageName())) {
+            //此时应用正在前台, 不作处理
+            return;
+        }
+        /*for (ActivityManager.RunningTaskInfo info : list) {
+            if (info.topActivity.getPackageName().equals(context.getPackageName())) {
+                intent = new Intent();
+                intent.setComponent(info.topActivity);
+                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                if (! (context instanceof Activity)) {
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                }
+                context.startActivity(intent);
+                return;
+            }
+        }*/
+        intent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
+        context.startActivity(intent);
     }
 
     public static boolean isAppForeground(Context context){

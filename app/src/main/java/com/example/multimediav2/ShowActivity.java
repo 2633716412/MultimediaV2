@@ -2,11 +2,11 @@ package com.example.multimediav2;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.View;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Button;
 
 import com.example.multimediav2.HttpUnit.HttpUnitFactory;
@@ -31,7 +31,6 @@ public class ShowActivity extends BaseActivity {
     private WebView webView1;
     private WebView webView2;
     private Button btn;
-    private Handler handler=new Handler();
     private boolean waitDouble = true;
     private Date endTime=new Date();
     @SuppressLint("SetJavaScriptEnabled")
@@ -40,30 +39,39 @@ public class ShowActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show);
         btn=findViewById(R.id.back);
-        //btn.getBackground().setAlpha(0);
+        btn.getBackground().setAlpha(0);
         Paras.appContext=this;
         SPUnit spUnit = new SPUnit(ShowActivity.this);
         DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
         webView1=findViewById(R.id.webView1);
         WebSettings webSetting1=webView1.getSettings();
         webSetting1.setJavaScriptEnabled(true);
-        webSetting1.setLoadsImagesAutomatically(true);
-        webSetting1.setUseWideViewPort(true);
+        webSetting1.setMediaPlaybackRequiresUserGesture(false);
         webView1.setWebChromeClient(new WebChromeClient());
         //webView1.setBackgroundColor(0); // 设置背景色
         webView2=findViewById(R.id.webView2);
         webView2.setBackgroundColor(0); // 设置背景色
         WebSettings webSetting2=webView2.getSettings();
         webSetting2.setJavaScriptEnabled(true);
-        webSetting2.setDomStorageEnabled(true);
-        webSetting2.setUseWideViewPort(true);
-        webView2.setWebChromeClient(new WebChromeClient());
+        webView2.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        webView2.setWebViewClient(new WebViewClient());
+
         webSetting2.setLoadsImagesAutomatically(true);
+        webSetting2.setDomStorageEnabled(true);
+        webSetting2.setAppCacheEnabled(true);
+        webSetting2.setCacheMode(WebSettings.LOAD_DEFAULT);
+        webSetting2.setDatabaseEnabled(true);
+        webSetting2.setSupportZoom(true);
+        webSetting2.setBuiltInZoomControls(true);
+        webSetting2.setDisplayZoomControls(false);
+        webSetting2.setAllowContentAccess(true);
+        webSetting2.setAllowFileAccess(true);
+        webSetting2.setDefaultTextEncodingName("utf-8");
         webSetting2.setMediaPlaybackRequiresUserGesture(false);
         //webView2.getBackground().setAlpha(0); // 设置填充透明度 范围：0-255
         //webView2.loadUrl("http://192.168.9.201:14084/selfpc2/app/index.html?id=10024");
 
-        new Thread(new Runnable() {
+        Thread playThread=new Thread(new Runnable() {
             @Override
             public void run() {
                 if(deviceData.getId()>0) {
@@ -84,9 +92,10 @@ public class ShowActivity extends BaseActivity {
                         }
                     }
                 }
-
             }
-        }).start();
+        });
+        playThread.setPriority(1);
+        playThread.start();
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -110,6 +119,7 @@ public class ShowActivity extends BaseActivity {
                     LogHelper.Debug("跳转配置页");
                     waitDouble = true;
                     Paras.first=false;
+                    playThread.interrupt();
                     SkipTo(MainActivity.class);
                 }
             }
@@ -131,7 +141,7 @@ public class ShowActivity extends BaseActivity {
                 StringBuilder url = new StringBuilder(Paras.mulHtmlAddr);
                 String wvUrl="";
                 JSONArray itemArray = object.getJSONArray("data");
-                boolean first=false;
+                final boolean[] first = {false};
                 if(object.getBoolean("success")) {
                     for (int i = 0; i < itemArray.length(); i++) {
                         JSONObject object1 = itemArray.getJSONObject(i);
@@ -149,7 +159,7 @@ public class ShowActivity extends BaseActivity {
                                 DateUtil begin = DateUtil.GetByHourMin(startStr);
                                 DateUtil end = DateUtil.GetByHourMin(endStr);
                                 DateUtil now = DateUtil.Now();
-                                if (now.Between(begin, end)&& !first) {
+                                if (now.Between(begin, end)&& !first[0]) {
                                     List<String> timeStr= Arrays.asList(endStr.split(":"));
                                     Calendar start = Calendar.getInstance();
                                     int hour= Integer.parseInt(timeStr.get(0));
@@ -163,15 +173,21 @@ public class ShowActivity extends BaseActivity {
                                     if(underUrl!=null&& !underUrl.equals("")) {
                                         wvUrl=underUrl;
                                     }
-                                    first=true;
+                                    first[0] =true;
                                 }
                             }
                         }
                     }
                     String finalWvUrl = wvUrl;
                     ShowActivity.this.runOnUiThread(new Runnable() {
+                        //boolean firstLoad=false;
                         public void run() {
                             try {
+                                /*if(!firstLoad) {
+                                    webView2.loadUrl(url.toString());
+                                    webView1.loadUrl(finalWvUrl);
+                                    firstLoad=true;
+                                }*/
                                 webView2.loadUrl(url.toString());
                                 webView1.loadUrl(finalWvUrl);
                             } catch (Exception e) {

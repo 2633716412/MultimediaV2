@@ -41,9 +41,9 @@ public class Paras {
 
     public static String devType = DEVMR;
 
-    public static String mulAPIAddr = "http://192.168.9.201:14084/selfv2api";
+    public static String mulAPIAddr = "http://ip:port/selfv2api";
 
-    public static String mulHtmlAddr = "http://192.168.9.201:14084/selfpc2/app/index.html";
+    public static String mulHtmlAddr = "http://ip:port/selfpc2/app/index.html";
 
     public static String name = "";
 

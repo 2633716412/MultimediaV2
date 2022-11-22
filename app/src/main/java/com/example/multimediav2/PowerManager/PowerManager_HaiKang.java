@@ -1,12 +1,17 @@
 package com.example.multimediav2.PowerManager;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 
 import com.example.multimediav2.HttpUnit.HttpUnitFactory;
 import com.hikvision.dmb.TimeSwitchConfig;
 import com.hikvision.dmb.system.InfoSystemApi;
 import com.hikvision.dmb.time.InfoTimeApi;
 import com.hikvision.dmb.util.InfoUtilApi;
+
+import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -39,6 +44,11 @@ public class PowerManager_HaiKang implements IPowerManager {
 
     @Override
     public void Install(String path) {
+        Intent intent = Paras.appContext.getPackageManager().getLaunchIntentForPackage(Paras.appContext.getPackageName());
+        PendingIntent restartIntent = PendingIntent.getActivity(Paras.appContext, 0, intent, 0);
+        AlarmManager mgr = (AlarmManager) Paras.appContext.getSystemService(Context.ALARM_SERVICE);
+        mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 5 * 1000, restartIntent); // n秒后重启
+        System.exit(0);
         InfoUtilApi.silentInstallation(path);
     }
 
@@ -112,9 +122,12 @@ public class PowerManager_HaiKang implements IPowerManager {
     @Override
     public void setSystemTime(Context context) {
         try {
-            String res_str = HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/Multimedia/API/GetTime");
+            String serverStr= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getTime"+"?device_id="+Paras.device_id);
+            JSONObject obj= new JSONObject(serverStr);
+            JSONObject dataObject = obj.getJSONObject("data");
+            String time=dataObject.getString("time");
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            Date serverTime = simpleDateFormat.parse(res_str);
+            Date serverTime = simpleDateFormat.parse(time);
             Date localTime = new Date();
             float min = Math.abs(localTime.getTime() - serverTime.getTime()) / 1000f / 60f;
 

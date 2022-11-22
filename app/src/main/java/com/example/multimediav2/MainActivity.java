@@ -60,7 +60,6 @@ public class MainActivity extends BaseActivity implements IMsgManager {
         Paras.Wiidth = getResources().getDisplayMetrics().widthPixels;
         Paras.Height = getResources().getDisplayMetrics().heightPixels;
         checkPermission();
-
         SPUnit spUnit = new SPUnit(MainActivity.this);
         DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
         device_type=findViewById(R.id.device_type);
@@ -109,6 +108,8 @@ public class MainActivity extends BaseActivity implements IMsgManager {
                 }
                 switch_text.setText(timeStr);
             }
+            Paras.mulAPIAddr=GetUrl(Paras.mulAPIAddr,deviceData.getApi_ip(),deviceData.getApi_port());
+            Paras.mulHtmlAddr=GetUrl(Paras.mulHtmlAddr,deviceData.getApi_ip(),deviceData.getApi_port());
             device_name.setText(deviceData.getDevice_name());
             if(!Objects.equals(deviceData.getApi_ip(), "")) {
                 List<String> inters= Arrays.asList(deviceData.getApi_ip().split("\\."));
@@ -175,13 +176,13 @@ public class MainActivity extends BaseActivity implements IMsgManager {
 
                     DropData deviceType=(DropData)device_type.getSelectedItem();
                     data.setDevice_type(deviceType.getCode());
-
-                    Paras.mulAPIAddr="http://"+data.getApi_ip()+ ":" +data.getApi_port()+"/selfv2api";
-                    Paras.mulHtmlAddr="http://"+data.getApi_ip()+ ":" +data.getApi_port()+"/selfpc2/app/index.html";
+                    Paras.mulAPIAddr=GetUrl(Paras.mulAPIAddr,data.getApi_ip(),data.getApi_port());
+                    Paras.mulHtmlAddr=GetUrl(Paras.mulHtmlAddr,data.getApi_ip(),data.getApi_port());
                     spUnit.Set("DeviceData",data);
                     CmdManager iIniHanlder = new CmdManager();
                     iIniHanlder.Init(MainActivity.this, null);
                     Paras.msgManager.SendMsg("修改配置完成");
+                    Paras.updateProgram=true;
                     SkipTo(ShowActivity.class);
                 } catch (Exception ex) {
                     LogHelper.Error(ex);
@@ -273,5 +274,13 @@ public class MainActivity extends BaseActivity implements IMsgManager {
             return "";
         }
         return "";
+    }
+
+    public String GetUrl(String oldUrl,String ip,String port) {
+        String newStr="";
+        String tallStr=oldUrl.substring(oldUrl.indexOf("/self"));
+        String headStr=oldUrl.substring(0,oldUrl.indexOf("//")+2);
+        newStr=headStr+ip+":"+port+tallStr;
+        return newStr;
     }
 }
