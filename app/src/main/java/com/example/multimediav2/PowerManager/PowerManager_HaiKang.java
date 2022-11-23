@@ -48,7 +48,7 @@ public class PowerManager_HaiKang implements IPowerManager {
         PendingIntent restartIntent = PendingIntent.getActivity(Paras.appContext, 0, intent, 0);
         AlarmManager mgr = (AlarmManager) Paras.appContext.getSystemService(Context.ALARM_SERVICE);
         mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 5 * 1000, restartIntent); // n秒后重启
-        System.exit(0);
+        //System.exit(0);
         InfoUtilApi.silentInstallation(path);
     }
 

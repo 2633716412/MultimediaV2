@@ -54,6 +54,8 @@ public class MainActivity extends BaseActivity implements IMsgManager {
         setContentView(R.layout.activity_main);
         Paras.appContext=this;
         Paras.msgManager=this;
+        startService(new Intent(this, AppService2.class));
+        startService(new Intent(this, AppService.class));
         /*Intent intent = new Intent(Paras.appContext, AppService.class);
         startService(intent);*/
         Paras.androidNumber= "Android"+android.os.Build.VERSION.RELEASE;

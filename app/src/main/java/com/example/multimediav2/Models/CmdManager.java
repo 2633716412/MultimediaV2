@@ -1,11 +1,9 @@
 package com.example.multimediav2.Models;
 
-import android.app.ActivityManager;
-import android.app.Service;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Handler;
+import android.os.PowerManager;
 
 import com.example.multimediav2.BaseActivity;
 import com.example.multimediav2.CacheServer.CacheServerFactory;
@@ -30,6 +28,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -46,12 +45,13 @@ public class CmdManager {
     static TextSpeaker2 textSpeaker2;
     static FileUnitDef fileUnitDef;
     static boolean firstShut=true;
+    private PowerManager.WakeLock mWakeLock;
+
     public void Init(final Context context, final Action<String> OnIniEnd) {
+        getLock(context);
         Handler handler=new Handler();
         final SPUnit spUnit = new SPUnit(context);
         final DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
-
-
         Paras.volume = 100;
 
         fileUnitDef = new FileUnitDef();
@@ -99,11 +99,9 @@ public class CmdManager {
         Paras.powerManager.SetTime(deviceData.osTimes);
 
         Thread task= new Thread(new Runnable() {
-
             @Override
             public void run() {
                 new Thread(new Runnable() {
-
                     @Override
                     public void run() {
                         try {
@@ -130,17 +128,27 @@ public class CmdManager {
                                 updateObject.put("device_id",deviceData.getId());
                                 updateObject.put("is_record",1);
                                 String updateRes= HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/updateHeartTime",updateObject.toString());
+                                if(!Objects.equals(updateRes, "")) {
+                                    JSONObject timeObject= new JSONObject(updateRes);
+                                    boolean res = timeObject.getBoolean("success");
+                                    if(res) {
+                                        LogHelper.Debug("更新心跳时间成功");
+                                    }
+                                }
                                 if (!code.equals("")) {
                                     switch (code) {
                                         case "1002":
+                                            LogHelper.Debug("开始开机");
                                             Paras.powerManager.Open();
                                             break;
                                         case "1003":
                                             Paras.msgManager.SendMsg("正在准备关机...");
+                                            LogHelper.Debug("开始关机");
                                             Paras.powerManager.ShutDown();
                                             break;
                                         case "1004":
                                             Paras.msgManager.SendMsg("正在准备重启...");
+                                            LogHelper.Debug("开始重启");
                                             Paras.powerManager.Reboot();
                                             break;
                                         case "1005":
@@ -172,6 +180,7 @@ public class CmdManager {
                                             //spUnit.SetInt("UserVolume", Paras.volume);
                                             AudioUtil audioUtil=AudioUtil.getInstance(context);
                                             audioUtil.setMediaVolume(Paras.volume);
+                                            LogHelper.Debug("设置音量 = " + Paras.volume);
                                             Paras.msgManager.SendMsg("设置音量 = " + Paras.volume);
                                             break;
                                         case "1007":
@@ -216,9 +225,11 @@ public class CmdManager {
                                             break;
                                         case "1009":
                                             Paras.msgManager.SendMsg("刷新节目");
+                                            LogHelper.Debug("刷新节目");
                                             Paras.updateProgram=true;
                                             break;
                                         case "1010":
+                                            LogHelper.Debug("设置开关机时间");
                                             String timeStr=contentObject.getString("Str");
                                             if(!timeStr.equals("")) {
                                                 List<OSTime> list=new ArrayList<>();
@@ -241,6 +252,7 @@ public class CmdManager {
                                             }
                                             break;
                                         case "1011":
+                                            LogHelper.Debug("开始同步时间");
                                             Paras.powerManager.setSystemTime(context);
                                         /*Date startTime=new Date();
                                         String serverStr= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getTime"+"?device_id="+deviceData.getId());
@@ -287,6 +299,7 @@ public class CmdManager {
                                         case "1013":
                                             String voiceTxt = contentObject.getString("VoiceData");
                                             Paras.msgManager.SendMsg("开始呼叫：" + voiceTxt);
+                                            LogHelper.Debug("开始呼叫：" + voiceTxt);
                                             //TextSpeaker.Read(voiceTxt);
                                             textSpeaker2.read(voiceTxt);
                                             break;
@@ -305,7 +318,7 @@ public class CmdManager {
         });
 
         PollingUtil pollingUtil=new PollingUtil(handler);
-        pollingUtil.startPolling(task,3000,true);
+        pollingUtil.startPolling(task,4000,true);
 
         //task.start();
 
@@ -359,7 +372,7 @@ public class CmdManager {
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.HOUR_OF_DAY, 23);
         calendar.set(Calendar.MINUTE, 59);
-        calendar.set(Calendar.SECOND, 59);
+        calendar.set(Calendar.SECOND, 50);
         long lastTime=calendar.getTime().getTime();
         long nowTime=new Date().getTime();
         long delay=lastTime-nowTime;
@@ -408,43 +421,32 @@ public class CmdManager {
         shutPolling.startPolling(shutThread,1800000,true);
     }
 
-    public static void openApplicationFromBackground(Context context) {
-        Intent intent;
-        ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
-        List<ActivityManager.RunningTaskInfo> list = am.getRunningTasks(100);
-        if (!list.isEmpty() && list.get(0).topActivity.getPackageName().equals(context.getPackageName())) {
-            //此时应用正在前台, 不作处理
-            return;
-        }
-        /*for (ActivityManager.RunningTaskInfo info : list) {
-            if (info.topActivity.getPackageName().equals(context.getPackageName())) {
-                intent = new Intent();
-                intent.setComponent(info.topActivity);
-                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                if (! (context instanceof Activity)) {
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                }
-                context.startActivity(intent);
-                return;
+    synchronized private void getLock(Context context) {
+        if (mWakeLock == null) {
+            PowerManager mgr = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+            mWakeLock = mgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, CmdManager.class.getName());
+            mWakeLock.setReferenceCounted(true);
+            Calendar c = Calendar.getInstance();
+            c.setTimeInMillis((System.currentTimeMillis()));
+            int hour = c.get(Calendar.HOUR_OF_DAY);
+            if (hour >= 23 || hour <= 6) {
+                mWakeLock.acquire(5000);
+            } else {
+                mWakeLock.acquire(300000);
             }
-        }*/
-        intent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
-        context.startActivity(intent);
+        }
+        LogHelper.Debug("get lock");
     }
 
-    public static boolean isAppForeground(Context context){
-        ActivityManager activityManager = (ActivityManager) context.getSystemService(Service.ACTIVITY_SERVICE);
-        List<ActivityManager.RunningAppProcessInfo> runningAppProcessInfoList = activityManager.getRunningAppProcesses();
-        if (runningAppProcessInfoList==null){
-            return false;
-        }
-        for (ActivityManager.RunningAppProcessInfo processInfo : runningAppProcessInfoList) {
-            if (processInfo.processName.equals(context.getPackageName()) &&
-                    processInfo.importance==ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND){
-                return true;
+    synchronized private void releaseLock() {
+        if (mWakeLock != null) {
+            if (mWakeLock.isHeld()) {
+                mWakeLock.release();
+                LogHelper.Debug("release lock");
             }
+
+            mWakeLock = null;
         }
-        return false;
     }
 
 }

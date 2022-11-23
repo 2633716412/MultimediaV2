@@ -67,11 +67,37 @@
             </intent-filter>
         </activity>
 
-        <!--<service
-            android:name="com.example.multimediav2.AppService"
-            android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
-            android:enabled="true"
-            android:exported="true" />-->
+
+        <service android:name="com.example.multimediav2.AppService"
+            android:process=":AppService"
+            android:exported="true">
+        <intent-filter android:priority="1000">
+            <!-- 系统启动完成后会调用-->
+            <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            <action android:name="android.intent.action.DATE_CHANGED"/>
+            <action android:name="android.intent.action.MEDIA_MOUNTED" />
+            <action android:name="android.intent.action.USER_PRESENT" />
+            <action android:name="android.intent.action.ACTION_TIME_TICK" />
+            <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
+            <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" />
+        </intent-filter>
+        </service>
+
+
+        <service android:name="com.example.multimediav2.AppService2"
+        android:process=":AppService2"
+            android:exported="true">
+        <intent-filter >
+            <!-- 系统启动完成后会调用-->
+            <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            <action android:name="android.intent.action.DATE_CHANGED"/>
+            <action android:name="android.intent.action.MEDIA_MOUNTED" />
+            <action android:name="android.intent.action.USER_PRESENT" />
+            <action android:name="android.intent.action.ACTION_TIME_TICK" />
+            <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
+            <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" />
+        </intent-filter>
+        </service>
         <receiver
             android:name="Modules.BootCompleteReceiver"
             android:enabled="true"

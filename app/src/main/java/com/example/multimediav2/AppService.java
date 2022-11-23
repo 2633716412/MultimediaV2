@@ -1,71 +1,51 @@
 package com.example.multimediav2;
 
 
+import android.app.Notification;
 import android.app.Service;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Binder;
+import android.content.ServiceConnection;
 import android.os.IBinder;
-import android.util.Log;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import androidx.annotation.Nullable;
+
+import Modules.LogHelper;
 
 public class AppService extends Service
 {
-    private static final String TAG = "AppService";
-    private static final long RESTART_DELAY = 10 * 1000; // 多少时间后重启检测(1小时)
-    private MyBinder mBinder;
-
-    // 此对象用于绑定的service与调用者之间的通信
-    public class MyBinder extends Binder {
-
-        /**
-         * 获取service实例
-         * @return
-         */
-        public AppService getService() {
-            return AppService.this;
-        }
-
-        /**
-         * 启动app重启任务
-         */
-        public void startRestartTask(final Context context) {
-            TimerTask task = new TimerTask() {
-                @Override
-                public void run() {
-                    Intent intent = getPackageManager().getLaunchIntentForPackage(
-                            getApplication().getPackageName());
-                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(intent);
-                    System.exit(0);
-                }
-            };
-
-            Timer timer = new Timer();
-            timer.schedule(task, RESTART_DELAY);
-        }
-    }
-
+    @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        // Create MyBinder object
-        if (mBinder == null) {
-            mBinder = new MyBinder();
+        return new IProcessConnection.Stub() {};
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        startForeground(1,new Notification());
+        //绑定建立链接
+        bindService(new Intent(this,AppService2.class),
+                mServiceConnection, Context.BIND_IMPORTANT);
+        return START_STICKY;
+    }
+
+    private ServiceConnection mServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+            //链接上
+            LogHelper.Debug("test","appService:建立链接");
         }
-        return mBinder;
-    }
 
-    @Override
-    public boolean onUnbind(Intent intent) {
-        Log.e(TAG, "onUnbind");
-        return super.onUnbind(intent);
-    }
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+            //断开链接
+            startService(new Intent(AppService.this,AppService2.class));
+            //重新绑定
+            bindService(new Intent(AppService.this,AppService2.class),
+                    mServiceConnection, Context.BIND_IMPORTANT);
+        }
+    };
 
-    @Override
-    public void onDestroy() {
-        Log.e(TAG,"onDestroy");
-        super.onDestroy();
-    }
+
 }
