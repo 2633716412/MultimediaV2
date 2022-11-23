@@ -3,7 +3,6 @@ package com.example.multimediav2.Models;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Handler;
-import android.os.PowerManager;
 
 import com.example.multimediav2.BaseActivity;
 import com.example.multimediav2.CacheServer.CacheServerFactory;
@@ -45,15 +44,13 @@ public class CmdManager {
     static TextSpeaker2 textSpeaker2;
     static FileUnitDef fileUnitDef;
     static boolean firstShut=true;
-    private PowerManager.WakeLock mWakeLock;
+
 
     public void Init(final Context context, final Action<String> OnIniEnd) {
-        getLock(context);
         Handler handler=new Handler();
         final SPUnit spUnit = new SPUnit(context);
         final DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
         Paras.volume = 100;
-
         fileUnitDef = new FileUnitDef();
         Paras.name = deviceData.getDevice_name();
         Paras.cacheServer = CacheServerFactory.Get(context);
@@ -282,18 +279,6 @@ public class CmdManager {
                                             if(!resultObj.getBoolean("success")) {
                                                 LogHelper.Error("日志提取失败：" + LogHelper.logFilePath);
                                             }
-                                            //上传日志文件
-                                        /*File logFile=new File(LogHelper.logFilePath);
-                                        String base64LogStr = Base64FileUtil.encodeBase64File(logFile.getPath());
-                                        JSONObject logObject=new JSONObject();
-                                        logObject.put("device_id",deviceData.getId());
-                                        logObject.put("fileFormat",".log");
-                                        logObject.put("base64Str",base64LogStr);
-                                        String result = HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/uploadFile",logObject.toString());
-                                        JSONObject resultObj= new JSONObject(result);
-                                        if(!resultObj.getBoolean("success")) {
-                                            LogHelper.Error("日志提取失败：" + LogHelper.logFilePath);
-                                        }*/
                                             LogHelper.Debug("日志提取完成：" + LogHelper.logFilePath);
                                             break;
                                         case "1013":
@@ -301,6 +286,7 @@ public class CmdManager {
                                             Paras.msgManager.SendMsg("开始呼叫：" + voiceTxt);
                                             LogHelper.Debug("开始呼叫：" + voiceTxt);
                                             //TextSpeaker.Read(voiceTxt);
+                                            //textSpeaker2.speak(voiceTxt);
                                             textSpeaker2.read(voiceTxt);
                                             break;
                                     }
@@ -339,7 +325,7 @@ public class CmdManager {
         }).start();
 
 
-        //每天的23:59:59获取一次日志
+        //每天的23:59:50获取一次日志
         Timer timer = new Timer(true);
         TimerTask timerTask = new TimerTask() {
             @Override
@@ -419,34 +405,6 @@ public class CmdManager {
         });
         PollingUtil shutPolling=new PollingUtil(handler);
         shutPolling.startPolling(shutThread,1800000,true);
-    }
-
-    synchronized private void getLock(Context context) {
-        if (mWakeLock == null) {
-            PowerManager mgr = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-            mWakeLock = mgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, CmdManager.class.getName());
-            mWakeLock.setReferenceCounted(true);
-            Calendar c = Calendar.getInstance();
-            c.setTimeInMillis((System.currentTimeMillis()));
-            int hour = c.get(Calendar.HOUR_OF_DAY);
-            if (hour >= 23 || hour <= 6) {
-                mWakeLock.acquire(5000);
-            } else {
-                mWakeLock.acquire(300000);
-            }
-        }
-        LogHelper.Debug("get lock");
-    }
-
-    synchronized private void releaseLock() {
-        if (mWakeLock != null) {
-            if (mWakeLock.isHeld()) {
-                mWakeLock.release();
-                LogHelper.Debug("release lock");
-            }
-
-            mWakeLock = null;
-        }
     }
 
 }
