@@ -24,16 +24,15 @@ public class MacUnit {
     {
         String strMac = null;
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT < 23) {
 
             strMac = getLocalMacAddressFromWifiInfo(context);
             return strMac;
-        } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N
-                && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        } else if (Build.VERSION.SDK_INT == 23) {
 
             strMac = getMacAddress(context);
             return strMac;
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        } else {
 
             if (!StringUnit.isEmpty(getMacAddress())) {
 
@@ -49,8 +48,6 @@ public class MacUnit {
                 return strMac;
             }
         }
-
-        return "02:00:00:00:00:00";
     }
 
     private static String getLocalMacAddressFromWifiInfo(Context context){
@@ -63,7 +60,7 @@ public class MacUnit {
     private static String getMacAddress(Context context) {
 
         // 如果是6.0以下，直接通过wifimanager获取
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT < 23) {
             String macAddress0 = getMacAddress0(context);
             if (!StringUnit.isEmpty(macAddress0)) {
                 return macAddress0;

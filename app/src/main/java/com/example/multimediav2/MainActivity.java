@@ -1,11 +1,8 @@
 package com.example.multimediav2;
 
-import android.Manifest;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -27,7 +24,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Objects;
 
 import Modules.DeviceData;
 import Modules.IMsgManager;
@@ -59,11 +55,10 @@ public class MainActivity extends BaseActivity implements IMsgManager {
         Paras.androidNumber= "Android"+android.os.Build.VERSION.RELEASE;
         Paras.Wiidth = getResources().getDisplayMetrics().widthPixels;
         Paras.Height = getResources().getDisplayMetrics().heightPixels;
-        checkPermission();
         SPUnit spUnit = new SPUnit(MainActivity.this);
         DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
-        device_type=findViewById(R.id.device_type);
-        switch_text=findViewById(R.id.switch_text);
+        device_type= (Spinner) findViewById(R.id.device_type);
+        switch_text= (TextView) findViewById(R.id.switch_text);
         List<DropData> dropList=new ArrayList<DropData>();
         DropData dev0=new DropData("test","TEST");
         dropList.add(dev0);
@@ -81,12 +76,12 @@ public class MainActivity extends BaseActivity implements IMsgManager {
         device_type.setAdapter(adapter);
 
         if(deviceData.getId()>0) {
-            device_name=findViewById(R.id.device_name);
-            inter1=findViewById(R.id.inter1);
-            inter2=findViewById(R.id.inter2);
-            inter3=findViewById(R.id.inter3);
-            inter4=findViewById(R.id.inter4);
-            port=findViewById(R.id.port);
+            device_name= (EditText) findViewById(R.id.device_name);
+            inter1= (EditText) findViewById(R.id.inter1);
+            inter2= (EditText) findViewById(R.id.inter2);
+            inter3= (EditText) findViewById(R.id.inter3);
+            inter4= (EditText) findViewById(R.id.inter4);
+            port= (EditText) findViewById(R.id.port);
             if(deviceData.getOsTimes().size()>0) {
                 StringBuilder timeStr= new StringBuilder();
                 for(int i=0;i<7;i++) {
@@ -111,7 +106,7 @@ public class MainActivity extends BaseActivity implements IMsgManager {
             Paras.mulAPIAddr=GetUrl(Paras.mulAPIAddr,deviceData.getApi_ip(),deviceData.getApi_port());
             Paras.mulHtmlAddr=GetUrl(Paras.mulHtmlAddr,deviceData.getApi_ip(),deviceData.getApi_port());
             device_name.setText(deviceData.getDevice_name());
-            if(!Objects.equals(deviceData.getApi_ip(), "")) {
+            if(deviceData.getApi_ip()!= "") {
                 List<String> inters= Arrays.asList(deviceData.getApi_ip().split("\\."));
                 inter1.setText(inters.get(0));
                 inter2.setText(inters.get(1));
@@ -121,7 +116,7 @@ public class MainActivity extends BaseActivity implements IMsgManager {
             port.setText(deviceData.getApi_port());
             for(int i=0;i<dropList.size();i++) {
                 DropData data=dropList.get(i);
-                if(Objects.equals(deviceData.getDevice_type(), data.getCode())) {
+                if(deviceData.getDevice_type()==data.getCode()) {
                     device_type.setSelection(i);
                 }
             }
@@ -133,19 +128,19 @@ public class MainActivity extends BaseActivity implements IMsgManager {
             }
         }
 
-        btu_save=findViewById(R.id.btu_save);
+        btu_save= (Button) findViewById(R.id.btu_save);
         btu_save.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 try {
 
-                    device_name=findViewById(R.id.device_name);
-                    inter1=findViewById(R.id.inter1);
-                    inter2=findViewById(R.id.inter2);
-                    inter3=findViewById(R.id.inter3);
-                    inter4=findViewById(R.id.inter4);
-                    port=findViewById(R.id.port);
-                    device_type=findViewById(R.id.device_type);
+                    device_name= (EditText) findViewById(R.id.device_name);
+                    inter1= (EditText) findViewById(R.id.inter1);
+                    inter2= (EditText) findViewById(R.id.inter2);
+                    inter3= (EditText) findViewById(R.id.inter3);
+                    inter4= (EditText) findViewById(R.id.inter4);
+                    port= (EditText) findViewById(R.id.port);
+                    device_type= (Spinner) findViewById(R.id.device_type);
                     SPUnit spUnit = new SPUnit(MainActivity.this);
                     DeviceData data=spUnit.Get("DeviceData", DeviceData.class);
                     //获取本地ip
@@ -191,7 +186,7 @@ public class MainActivity extends BaseActivity implements IMsgManager {
             }
         });
 
-        final Button btn_tts = findViewById(R.id.btu_tts);
+        final Button btn_tts = (Button) findViewById(R.id.btu_tts);
         btn_tts.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -204,24 +199,6 @@ public class MainActivity extends BaseActivity implements IMsgManager {
     private static String intToIp(int ip) {
         return (ip & 0xFF) + "." + ((ip >> 8) & 0xFF) + "." + ((ip >> 16) &     0xFF) + "." + (ip >> 24 & 0xFF);
     }
-
-    void checkPermission() {
-
-        final List<String> permissionsList = new ArrayList<>();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-
-            if ((checkSelfPermission(Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED))
-                permissionsList.add(Manifest.permission.INTERNET);
-
-            if ((checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED))
-                permissionsList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-
-            if (permissionsList.size() != 0) {
-                requestPermissions(permissionsList.toArray(new String[permissionsList.size()]), 1);
-            }
-        }
-    }
-
 
     public void SendMsg(String msg) {
         Message message = new Message();

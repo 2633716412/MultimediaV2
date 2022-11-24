@@ -44,17 +44,17 @@ public class LogHelper {
         Debug.MemoryInfo memoryInfo = new Debug.MemoryInfo();
         Debug.getMemoryInfo(memoryInfo);
         // dalvikPrivateClean + nativePrivateClean + otherPrivateClean;
-        int totalPrivateClean = memoryInfo.getTotalPrivateClean();
+        int totalPrivateClean = memoryInfo.getTotalPrivateDirty();
         // dalvikPrivateDirty + nativePrivateDirty + otherPrivateDirty;
         int totalPrivateDirty = memoryInfo.getTotalPrivateDirty();
         // dalvikPss + nativePss + otherPss;
         int totalPss = memoryInfo.getTotalPss();
         // dalvikSharedClean + nativeSharedClean + otherSharedClean;
-        int totalSharedClean = memoryInfo.getTotalSharedClean();
+        int totalSharedClean = memoryInfo.getTotalSharedDirty();
         // dalvikSharedDirty + nativeSharedDirty + otherSharedDirty;
         int totalSharedDirty = memoryInfo.getTotalSharedDirty();
         // dalvikSwappablePss + nativeSwappablePss + otherSwappablePss;
-        int totalSwappablePss = memoryInfo.getTotalSwappablePss();
+        int totalSwappablePss = memoryInfo.getTotalPss();
 
         int total = totalPrivateClean + totalPrivateDirty + totalPss + totalSharedClean + totalSharedDirty + totalSwappablePss;
         return total;

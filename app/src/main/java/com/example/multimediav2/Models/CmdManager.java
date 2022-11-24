@@ -130,6 +130,13 @@ public class CmdManager {
                                 updateObject.put("device_id",deviceData.getId());
                                 updateObject.put("is_record",1);
                                 String updateRes= HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/updateHeartTime",updateObject.toString());
+                                if(updateRes!="") {
+                                    JSONObject timeObject= new JSONObject(updateRes);
+                                    boolean success = timeObject.getBoolean("success");
+                                    if(success) {
+                                        LogHelper.Debug("心跳时间更新成功");
+                                    }
+                                }
                                 if (!code.equals("")) {
                                     switch (code) {
                                         case "1002":

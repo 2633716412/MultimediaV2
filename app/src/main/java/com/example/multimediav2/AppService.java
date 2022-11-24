@@ -31,7 +31,6 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 
 import Modules.Action;
 import Modules.DeviceData;
@@ -92,7 +91,7 @@ public class AppService extends Service
                                         updateObject.put("device_id",deviceData.getId());
                                         updateObject.put("is_record",1);
                                         String updateRes= HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/updateHeartTime",updateObject.toString());
-                                        if(!Objects.equals(updateRes, "")) {
+                                        if(updateRes!="") {
                                             JSONObject timeObject= new JSONObject(updateRes);
                                             boolean res = timeObject.getBoolean("success");
                                             if(res) {

@@ -19,7 +19,6 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 
 import Modules.DeviceData;
 import Modules.LogHelper;
@@ -38,18 +37,18 @@ public class ShowActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show);
-        btn=findViewById(R.id.back);
+        btn= (Button) findViewById(R.id.back);
         btn.getBackground().setAlpha(0);
         Paras.appContext=this;
         SPUnit spUnit = new SPUnit(ShowActivity.this);
         DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
-        webView1=findViewById(R.id.webView1);
+        webView1= (WebView) findViewById(R.id.webView1);
         WebSettings webSetting1=webView1.getSettings();
         webSetting1.setJavaScriptEnabled(true);
-        webSetting1.setMediaPlaybackRequiresUserGesture(false);
+        //webSetting1.setMediaPlaybackRequiresUserGesture(false);
         webView1.setWebChromeClient(new WebChromeClient());
         //webView1.setBackgroundColor(0); // 设置背景色
-        webView2=findViewById(R.id.webView2);
+        webView2= (WebView) findViewById(R.id.webView2);
         webView2.setBackgroundColor(0); // 设置背景色
         WebSettings webSetting2=webView2.getSettings();
         webSetting2.setJavaScriptEnabled(true);
@@ -67,7 +66,7 @@ public class ShowActivity extends BaseActivity {
         webSetting2.setAllowContentAccess(true);
         webSetting2.setAllowFileAccess(true);
         webSetting2.setDefaultTextEncodingName("utf-8");
-        webSetting2.setMediaPlaybackRequiresUserGesture(false);
+        //webSetting2.setMediaPlaybackRequiresUserGesture(false);
         //webView2.getBackground().setAlpha(0); // 设置填充透明度 范围：0-255
         //webView2.loadUrl("http://192.168.9.201:14084/selfpc2/app/index.html?id=10024");
 
@@ -136,7 +135,7 @@ public class ShowActivity extends BaseActivity {
             } catch (Exception e) {
                 LogHelper.Error(e);
             }
-            if(!Objects.equals(jsonStr, "")) {
+            if(jsonStr!="") {
                 JSONObject object = new JSONObject(jsonStr);
                 StringBuilder url = new StringBuilder(Paras.mulHtmlAddr);
                 String wvUrl="";

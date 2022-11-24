@@ -1,7 +1,6 @@
 package com.example.multimediav2.PowerManager;
 
 import android.content.Context;
-import android.os.Build;
 
 import com.example.multimediav2.HttpUnit.HttpUnitFactory;
 
@@ -179,7 +178,7 @@ abstract class BasePowerManager implements IPowerManager {
 
             Process p = Runtime.getRuntime().exec("su");
             DataOutputStream localDataOutputStream = new DataOutputStream(p.getOutputStream());
-            if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            if (android.os.Build.VERSION.SDK_INT >= 24) {
                 format  = new SimpleDateFormat("MMddHHmmyyyy.ss");
                 updateTimeStr=format.format(serverTime);
                 localDataOutputStream.writeBytes("date " + updateTimeStr + " set \n");

@@ -39,7 +39,7 @@ public class FileUnitRoot extends FileUnitDef {
             dataOutputStream = new DataOutputStream(process.getOutputStream());
             // 执行pm install命令
             String command = "pm install -r " + apkPath + "\n";
-            String command1 = "sleep 5;am start -n com.nf.newmul/com.nf.newmul.SettingActivity\n";
+            String command1 = "sleep 5;am start -n com.example.multimediav2/com.example.multimediav2.MainActivity\n";
             dataOutputStream.write(command.getBytes(Charset.forName("utf-8")));
             dataOutputStream.write(command1.getBytes(Charset.forName("utf-8")));
             dataOutputStream.flush();

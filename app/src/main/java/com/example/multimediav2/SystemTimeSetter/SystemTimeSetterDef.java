@@ -15,7 +15,7 @@ public class SystemTimeSetterDef implements ISystemTimeSetter {
     @Override
     public void SetTime(Date date) {
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        if (Build.VERSION.SDK_INT >= 24) {
             try {
                 SimpleDateFormat format = new SimpleDateFormat("MMddHHmmyyyy.ss", Locale.getDefault());
                 String dateTime = format.format(date);
