@@ -242,14 +242,6 @@ public class CmdManager {
                                             break;
                                         case "1011":
                                             Paras.powerManager.setSystemTime(context);
-                                        /*Date startTime=new Date();
-                                        String serverStr= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getTime"+"?device_id="+deviceData.getId());
-                                        Date endTime=new Date();
-                                        JSONObject obj= new JSONObject(serverStr);
-                                        JSONObject dataObject = obj.getJSONObject("data");
-                                        long serverTime=dataObject.getLong("time");
-                                        long sysTime=serverTime+(endTime.getTime()-startTime.getTime());
-                                        SystemClock.setCurrentTimeMillis(sysTime);*/
                                             break;
                                         case "1012":
                                             InputStream inputStream = new FileInputStream(LogHelper.logFilePath);;
@@ -270,18 +262,6 @@ public class CmdManager {
                                             if(!resultObj.getBoolean("success")) {
                                                 LogHelper.Error("日志提取失败：" + LogHelper.logFilePath);
                                             }
-                                            //上传日志文件
-                                        /*File logFile=new File(LogHelper.logFilePath);
-                                        String base64LogStr = Base64FileUtil.encodeBase64File(logFile.getPath());
-                                        JSONObject logObject=new JSONObject();
-                                        logObject.put("device_id",deviceData.getId());
-                                        logObject.put("fileFormat",".log");
-                                        logObject.put("base64Str",base64LogStr);
-                                        String result = HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/uploadFile",logObject.toString());
-                                        JSONObject resultObj= new JSONObject(result);
-                                        if(!resultObj.getBoolean("success")) {
-                                            LogHelper.Error("日志提取失败：" + LogHelper.logFilePath);
-                                        }*/
                                             LogHelper.Debug("日志提取完成：" + LogHelper.logFilePath);
                                             break;
                                         case "1013":
