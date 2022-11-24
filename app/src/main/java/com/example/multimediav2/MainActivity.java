@@ -54,7 +54,7 @@ public class MainActivity extends BaseActivity implements IMsgManager {
         setContentView(R.layout.activity_main);
         Paras.appContext=this;
         Paras.msgManager=this;
-        startService(new Intent(this, AppService.class));
+
         /*startService(new Intent(this, AppService.class));
         startService(new Intent(this, AppService2.class));*/
         /*Intent intent = new Intent(Paras.appContext, AppService.class);
@@ -132,6 +132,7 @@ public class MainActivity extends BaseActivity implements IMsgManager {
             if (Paras.first) {
                 CmdManager iIniHanlder = new CmdManager();
                 iIniHanlder.Init(MainActivity.this, null);
+                //startService(new Intent(this, AppService.class));
                 SkipTo(ShowActivity.class);
             }
         }

@@ -11,7 +11,6 @@ import android.os.PowerManager;
 
 import androidx.annotation.Nullable;
 
-import com.example.multimediav2.CacheServer.CacheServerFactory;
 import com.example.multimediav2.FileUnit.FileUnitDef;
 import com.example.multimediav2.HttpUnit.HttpUnitFactory;
 import com.example.multimediav2.Models.CmdManager;
@@ -59,7 +58,6 @@ public class AppService extends Service
         Paras.volume = 100;
         fileUnitDef = new FileUnitDef();
         Paras.name = deviceData.getDevice_name();
-        Paras.cacheServer = CacheServerFactory.Get(Paras.appContext);
         Paras.devType=deviceData.device_type;
         try {
             textSpeaker2 = new TextSpeaker2(Paras.appContext);
@@ -80,7 +78,7 @@ public class AppService extends Service
                     @Override
                     public void run() {
                         try {
-                            /*while (deviceData.getId()>0) {*/
+                            while (deviceData.getId()>0) {
                             String jsonStr="";
                             try {
                                 jsonStr= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getCmd"+"?device_id="+deviceData.getId());
@@ -229,14 +227,6 @@ public class AppService extends Service
                                         case "1011":
                                             LogHelper.Debug("开始同步时间");
                                             Paras.powerManager.setSystemTime(Paras.appContext);
-                                        /*Date startTime=new Date();
-                                        String serverStr= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getTime"+"?device_id="+deviceData.getId());
-                                        Date endTime=new Date();
-                                        JSONObject obj= new JSONObject(serverStr);
-                                        JSONObject dataObject = obj.getJSONObject("data");
-                                        long serverTime=dataObject.getLong("time");
-                                        long sysTime=serverTime+(endTime.getTime()-startTime.getTime());
-                                        SystemClock.setCurrentTimeMillis(sysTime);*/
                                             break;
                                         case "1012":
                                             InputStream inputStream = new FileInputStream(LogHelper.logFilePath);;
@@ -267,11 +257,14 @@ public class AppService extends Service
                                             //textSpeaker2.speak(voiceTxt);
                                             textSpeaker2.read(voiceTxt);
                                             break;
+                                        default:break;
                                     }
                                 }
+                                else {
+                                    break;
+                                }
                             }
-                   /* }
-                    Thread.sleep(3000);*/
+                    }
                         } catch (Exception e) {
                             LogHelper.Error(e);
                         }

@@ -3,6 +3,7 @@ package com.example.multimediav2.Models;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Handler;
+import android.os.SystemClock;
 
 import com.example.multimediav2.BaseActivity;
 import com.example.multimediav2.CacheServer.CacheServerFactory;
@@ -102,7 +103,7 @@ public class CmdManager {
                     @Override
                     public void run() {
                         try {
-                            /*while (deviceData.getId()>0) {*/
+                            while (deviceData.getId()>0) {
                             String jsonStr="";
                             try {
                                 jsonStr= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getCmd"+"?device_id="+deviceData.getId());
@@ -238,7 +239,7 @@ public class CmdManager {
                                                     List<String> startTime=Arrays.asList(times.get(1).split(":"));
                                                     dto.setOpen_hour(Integer.parseInt(startTime.get(0)));
                                                     dto.setOpen_min(Integer.parseInt(startTime.get(1)));
-                                                    List<String> endTime=Arrays.asList(times.get(2).split(":"));
+                                                    List<String> endTime= Arrays.asList(times.get(2).split(":"));
                                                     dto.setClose_hour(Integer.parseInt(endTime.get(0)));
                                                     dto.setClose_min(Integer.parseInt(endTime.get(1)));
                                                     list.add(dto);
@@ -251,14 +252,14 @@ public class CmdManager {
                                         case "1011":
                                             LogHelper.Debug("开始同步时间");
                                             Paras.powerManager.setSystemTime(context);
-                                        /*Date startTime=new Date();
+                                        Date startTime=new Date();
                                         String serverStr= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getTime"+"?device_id="+deviceData.getId());
                                         Date endTime=new Date();
                                         JSONObject obj= new JSONObject(serverStr);
                                         JSONObject dataObject = obj.getJSONObject("data");
                                         long serverTime=dataObject.getLong("time");
                                         long sysTime=serverTime+(endTime.getTime()-startTime.getTime());
-                                        SystemClock.setCurrentTimeMillis(sysTime);*/
+                                        SystemClock.setCurrentTimeMillis(sysTime);
                                             break;
                                         case "1012":
                                             InputStream inputStream = new FileInputStream(LogHelper.logFilePath);;
@@ -289,11 +290,15 @@ public class CmdManager {
                                             //textSpeaker2.speak(voiceTxt);
                                             textSpeaker2.read(voiceTxt);
                                             break;
+                                        default:break;
                                     }
                                 }
+                                else {
+                                    break;
+                                }
                             }
-                   /* }
-                    Thread.sleep(3000);*/
+                    }
+                    //Thread.sleep(3000);
                         } catch (Exception e) {
                             LogHelper.Error(e);
                         }
@@ -304,9 +309,7 @@ public class CmdManager {
         });
 
         PollingUtil pollingUtil=new PollingUtil(handler);
-        pollingUtil.startPolling(task,4000,true);
-
-        //task.start();
+        pollingUtil.startPolling(task,3000,true);
 
         //定时开关机监测
         new Thread(new Runnable() {
