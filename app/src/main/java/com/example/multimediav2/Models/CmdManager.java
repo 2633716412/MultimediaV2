@@ -107,7 +107,7 @@ public class CmdManager {
                     @Override
                     public void run() {
                         try {
-                            /*while (deviceData.getId()>0) {*/
+                            while (deviceData.getId()>0) {
                             String jsonStr="";
                             try {
                                 jsonStr= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getCmd"+"?device_id="+deviceData.getId());
@@ -290,11 +290,13 @@ public class CmdManager {
                                             //TextSpeaker.Read(voiceTxt);
                                             textSpeaker2.read(voiceTxt);
                                             break;
+                                        default:break;
                                     }
+                                } else {
+                                    break;
                                 }
                             }
-                   /* }
-                    Thread.sleep(3000);*/
+                    }
                         } catch (Exception e) {
                             LogHelper.Error(e);
                         }
