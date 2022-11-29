@@ -1,6 +1,7 @@
 package com.example.multimediav2;
 
 import android.annotation.SuppressLint;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.webkit.WebChromeClient;
@@ -8,6 +9,8 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
+
+import androidx.annotation.RequiresApi;
 
 import com.example.multimediav2.HttpUnit.HttpUnitFactory;
 import com.example.multimediav2.Utils.DateUtil;
@@ -33,6 +36,7 @@ public class ShowActivity extends BaseActivity {
     private Button btn;
     private boolean waitDouble = true;
     private Date endTime=new Date();
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,7 +57,7 @@ public class ShowActivity extends BaseActivity {
         webView2.setBackgroundColor(0); // 设置背景色
         WebSettings webSetting2=webView2.getSettings();
         webSetting2.setJavaScriptEnabled(true);
-        webView2.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        //webView2.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         webView2.setWebViewClient(new WebViewClient());
 
         webSetting2.setLoadsImagesAutomatically(true);
@@ -61,9 +65,6 @@ public class ShowActivity extends BaseActivity {
         webSetting2.setAppCacheEnabled(true);
         webSetting2.setCacheMode(WebSettings.LOAD_DEFAULT);
         webSetting2.setDatabaseEnabled(true);
-        webSetting2.setSupportZoom(true);
-        webSetting2.setBuiltInZoomControls(true);
-        webSetting2.setDisplayZoomControls(false);
         webSetting2.setAllowContentAccess(true);
         webSetting2.setAllowFileAccess(true);
         webSetting2.setDefaultTextEncodingName("utf-8");
@@ -178,17 +179,15 @@ public class ShowActivity extends BaseActivity {
                             }
                         }
                     }
+                    if(!first[0]) {
+                        url= new StringBuilder("");
+                    }
                     String finalWvUrl = wvUrl;
+                    StringBuilder finalUrl = url;
                     ShowActivity.this.runOnUiThread(new Runnable() {
-                        //boolean firstLoad=false;
                         public void run() {
                             try {
-                                /*if(!firstLoad) {
-                                    webView2.loadUrl(url.toString());
-                                    webView1.loadUrl(finalWvUrl);
-                                    firstLoad=true;
-                                }*/
-                                webView2.loadUrl(url.toString());
+                                webView2.loadUrl(finalUrl.toString());
                                 webView1.loadUrl(finalWvUrl);
                             } catch (Exception e) {
                                 LogHelper.Error(e);

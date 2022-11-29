@@ -110,7 +110,7 @@ public class CmdManager {
                             } catch (Exception e) {
                                 LogHelper.Error(e);
                             }
-                            if(jsonStr!="") {
+                            if(!Objects.equals(jsonStr, "")) {
                                 JSONObject object= new JSONObject(jsonStr);
                                 JSONObject dataStr = object.getJSONObject("data");
                                 String code = dataStr.getString("code");

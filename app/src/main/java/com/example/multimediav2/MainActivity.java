@@ -17,8 +17,11 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.multimediav2.HttpUnit.HttpUnitFactory;
 import com.example.multimediav2.Models.CmdManager;
 import com.example.multimediav2.Models.DropData;
+
+import org.json.JSONObject;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -111,8 +114,27 @@ public class MainActivity extends BaseActivity implements IMsgManager {
                 }
                 switch_text.setText(timeStr);
             }
-            Paras.mulAPIAddr=GetUrl(Paras.mulAPIAddr,deviceData.getApi_ip(),deviceData.getApi_port());
-            Paras.mulHtmlAddr=GetUrl(Paras.mulHtmlAddr,deviceData.getApi_ip(),deviceData.getApi_port());
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    Paras.mulAPIAddr=GetApiUrl(Paras.mulAPIAddr,deviceData.getApi_ip(),deviceData.getApi_port());
+                    String urlSuffix="";
+                    if(!Objects.equals(deviceData.getApi_ip(), "")) {
+                        try {
+                            String result= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getUrlSuffix");
+                            if(!Objects.equals(result, "")) {
+                                JSONObject object = new JSONObject(result);
+                                urlSuffix = object.getString("data");
+
+                            }
+                        } catch (Exception e) {
+                            LogHelper.Error(e);
+                        }
+                    }
+                    Paras.mulHtmlAddr=GetUrl(Paras.mulHtmlAddr,deviceData.getApi_ip(),deviceData.getApi_port(),urlSuffix);
+                }
+            }).start();
+
             device_name.setText(deviceData.getDevice_name());
             if(!Objects.equals(deviceData.getApi_ip(), "")) {
                 List<String> inters= Arrays.asList(deviceData.getApi_ip().split("\\."));
@@ -180,8 +202,28 @@ public class MainActivity extends BaseActivity implements IMsgManager {
 
                     DropData deviceType=(DropData)device_type.getSelectedItem();
                     data.setDevice_type(deviceType.getCode());
-                    Paras.mulAPIAddr=GetUrl(Paras.mulAPIAddr,data.getApi_ip(),data.getApi_port());
-                    Paras.mulHtmlAddr=GetUrl(Paras.mulHtmlAddr,data.getApi_ip(),data.getApi_port());
+
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Paras.mulAPIAddr=GetApiUrl(Paras.mulAPIAddr,data.getApi_ip(),data.getApi_port());
+                            String urlSuffix="";
+                            if(!Objects.equals(data.getApi_ip(), "")) {
+                                try {
+                                    String result= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getUrlSuffix");
+                                    if(!Objects.equals(result, "")) {
+                                        JSONObject object = new JSONObject(result);
+                                        urlSuffix = object.getString("data");
+
+                                    }
+                                } catch (Exception e) {
+                                    LogHelper.Error(e);
+                                }
+                            }
+                            Paras.mulHtmlAddr=GetUrl(Paras.mulHtmlAddr,data.getApi_ip(),data.getApi_port(),urlSuffix);
+                        }
+                    }).start();
+
                     spUnit.Set("DeviceData",data);
                     CmdManager iIniHanlder = new CmdManager();
                     iIniHanlder.Init(MainActivity.this, null);
@@ -206,7 +248,7 @@ public class MainActivity extends BaseActivity implements IMsgManager {
     }
 
     private static String intToIp(int ip) {
-        return (ip & 0xFF) + "." + ((ip >> 8) & 0xFF) + "." + ((ip >> 16) &     0xFF) + "." + (ip >> 24 & 0xFF);
+        return (ip & 0xFF) + "." + ((ip >> 8) & 0xFF) + "." + ((ip >> 16) & 0xFF) + "." + (ip >> 24 & 0xFF);
     }
 
     void checkPermission() {
@@ -280,12 +322,18 @@ public class MainActivity extends BaseActivity implements IMsgManager {
         return "";
     }
 
-    public String GetUrl(String oldUrl,String ip,String port) {
+    public String GetApiUrl(String oldUrl,String ip,String port) {
         String newStr="";
         String tallStr=oldUrl.substring(oldUrl.indexOf("/self"));
         String headStr=oldUrl.substring(0,oldUrl.indexOf("//")+2);
         newStr=headStr+ip+":"+port+tallStr;
         return newStr;
     }
-
+    public String GetUrl(String oldUrl,String ip,String port,String urlSuffix) {
+        String newStr="";
+        String tallStr=oldUrl.substring(oldUrl.indexOf("/app"));
+        String headStr=oldUrl.substring(0,oldUrl.indexOf("//")+2);
+        newStr=headStr+ip+":"+port+"/"+urlSuffix+tallStr;
+        return newStr;
+    }
 }

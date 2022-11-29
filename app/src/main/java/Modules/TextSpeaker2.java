@@ -55,12 +55,12 @@ public class TextSpeaker2 implements TextToSpeech.OnInitListener {
 
                     try {
                         int res=toSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, params);
+                        LogHelper.Debug("res"+res);
                         if (res == TextToSpeech.ERROR) {
                             stopTTS();
                             toSpeech=new TextToSpeech(Paras.appContext,TextSpeaker2.this);
                             read(text);
                         }
-                        Paras.msgManager.SendMsg("播报："+res);
                     } catch (Exception e) {
                         Paras.msgManager.SendMsg("播报失败："+e);
                         LogHelper.Error("语音返回错误"+e);
@@ -87,7 +87,6 @@ public class TextSpeaker2 implements TextToSpeech.OnInitListener {
             if (toSpeech != null) {
                 // 设置音调，值越大声音越尖（女生），值越小则变成男声,1.0是常规
                 toSpeech.setPitch(1.0f);
-                LogHelper.Debug("test语音");
                 LogHelper.Debug("语音模块初始化成功！");
             }
         }

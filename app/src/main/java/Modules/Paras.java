@@ -10,9 +10,9 @@ public class Paras {
 
     //<editor-fold desc="常量">
 
-    public static final int time_start_listen_power = 10;
+    public static final int time_start_listen_power = 60;
 
-    public static final int time_loop_power = 10;
+    public static final int time_loop_power = 30;
 
     public static final Long device_id = 10001L;
 
@@ -43,7 +43,7 @@ public class Paras {
 
     public static String mulAPIAddr = "http://ip:port/selfv2api";
 
-    public static String mulHtmlAddr = "http://ip:port/selfpc2/app/index.html";
+    public static String mulHtmlAddr = "http://ip:port/app/index.html";
 
     public static String name = "";
 
