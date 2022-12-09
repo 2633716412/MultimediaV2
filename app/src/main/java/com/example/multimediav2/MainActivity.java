@@ -57,7 +57,7 @@ public class MainActivity extends BaseActivity implements IMsgManager {
         setContentView(R.layout.activity_main);
         Paras.appContext=this;
         Paras.msgManager=this;
-
+        Paras.handler=new Handler();
         /*startService(new Intent(this, AppService.class));
         startService(new Intent(this, AppService2.class));*/
         /*Intent intent = new Intent(Paras.appContext, AppService.class);
@@ -114,24 +114,33 @@ public class MainActivity extends BaseActivity implements IMsgManager {
                 }
                 switch_text.setText(timeStr);
             }
+
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    Paras.mulAPIAddr=GetApiUrl(Paras.mulAPIAddr,deviceData.getApi_ip(),deviceData.getApi_port());
-                    String urlSuffix="";
-                    if(!Objects.equals(deviceData.getApi_ip(), "")) {
-                        try {
-                            String result= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getUrlSuffix");
-                            if(!Objects.equals(result, "")) {
-                                JSONObject object = new JSONObject(result);
-                                urlSuffix = object.getString("data");
-
+                    boolean isStopped=false;
+                    while (!isStopped) {
+                        Paras.mulAPIAddr=GetApiUrl(Paras.mulAPIAddr,deviceData.getApi_ip(),deviceData.getApi_port());
+                        String urlSuffix="";
+                        if(!Objects.equals(deviceData.getApi_ip(), "")) {
+                            try {
+                                String result= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getUrlSuffix");
+                                if(!Objects.equals(result, "")) {
+                                    JSONObject object = new JSONObject(result);
+                                    urlSuffix = object.getString("data");
+                                    isStopped=true;
+                                }
+                            } catch (Exception e) {
+                                LogHelper.Error("获取节目地址异常："+e);
                             }
+                        }
+                        Paras.mulHtmlAddr=GetUrl(Paras.mulHtmlAddr,deviceData.getApi_ip(),deviceData.getApi_port(),urlSuffix);
+                        try {
+                            Thread.sleep(5000);
                         } catch (Exception e) {
                             LogHelper.Error(e);
                         }
                     }
-                    Paras.mulHtmlAddr=GetUrl(Paras.mulHtmlAddr,deviceData.getApi_ip(),deviceData.getApi_port(),urlSuffix);
                 }
             }).start();
 

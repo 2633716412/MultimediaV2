@@ -14,6 +14,7 @@ import androidx.annotation.RequiresApi;
 
 import com.example.multimediav2.HttpUnit.HttpUnitFactory;
 import com.example.multimediav2.Utils.DateUtil;
+import com.example.multimediav2.Utils.PollingUtil;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -71,10 +72,16 @@ public class ShowActivity extends BaseActivity {
         webSetting2.setMediaPlaybackRequiresUserGesture(false);
         //webView2.getBackground().setAlpha(0); // 设置填充透明度 范围：0-255
         //webView2.loadUrl("http://192.168.9.201:14084/selfpc2/app/index.html?id=10024");
-
+        PollingUtil pollingUtil=new PollingUtil(Paras.handler);
         Thread playThread=new Thread(new Runnable() {
             @Override
             public void run() {
+                /*new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+
+                    }
+                }).start();*/
                 if(deviceData.getId()>0) {
                     GetProgramData(deviceData.getId());
                     while (true) {
@@ -86,16 +93,11 @@ public class ShowActivity extends BaseActivity {
                         if(nowTime.getTime()>endTime.getTime()) {
                             Paras.updateProgram=true;
                         }
-                        try {
-                            Thread.sleep(3000);
-                        } catch (InterruptedException e) {
-                            LogHelper.Error(e);
-                        }
                     }
                 }
             }
         });
-        playThread.setPriority(1);
+        //pollingUtil.startPolling(playThread,3000);
         playThread.start();
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -135,7 +137,8 @@ public class ShowActivity extends BaseActivity {
             try {
                 jsonStr = HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getProgramData?device_id=" + id);
             } catch (Exception e) {
-                LogHelper.Error(e);
+                LogHelper.Error("获取节目异常："+e);
+                Paras.updateProgram=true;
             }
             if(!Objects.equals(jsonStr, "")) {
                 JSONObject object = new JSONObject(jsonStr);
@@ -179,15 +182,11 @@ public class ShowActivity extends BaseActivity {
                             }
                         }
                     }
-                    if(!first[0]) {
-                        url= new StringBuilder("");
-                    }
                     String finalWvUrl = wvUrl;
-                    StringBuilder finalUrl = url;
                     ShowActivity.this.runOnUiThread(new Runnable() {
                         public void run() {
                             try {
-                                webView2.loadUrl(finalUrl.toString());
+                                webView2.loadUrl(url.toString());
                                 webView1.loadUrl(finalWvUrl);
                             } catch (Exception e) {
                                 LogHelper.Error(e);

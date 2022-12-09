@@ -1,12 +1,17 @@
 package Modules;
 
+import android.os.Build;
 import android.os.Debug;
 import android.util.Log;
+
+import androidx.annotation.RequiresApi;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import de.mindpipe.android.logging.log4j.LogConfigurator;
 
@@ -14,9 +19,11 @@ public class LogHelper {
 
     private static Logger logger;
 
+    private static SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    private static String dateStr=simpleDateFormat.format(new Date());
     public final static String logFilePath=Paras.appContext.getExternalFilesDir(null)
             + File.separator + "nf" + File.separator + "logs"
-            + File.separator + "log4j.log";
+            + File.separator + dateStr+"log4j.log";
 
     static {
         LogConfigurator logConfigurator = new LogConfigurator();
@@ -35,11 +42,13 @@ public class LogHelper {
         logger = Logger.getLogger(LogHelper.class);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public static void SaveAppInfo()
     {
         Debug(String.format("内存:%s 线程:%s",getMemory()/1024, Thread.activeCount()));
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     private static int getMemory() {
         Debug.MemoryInfo memoryInfo = new Debug.MemoryInfo();
         Debug.getMemoryInfo(memoryInfo);

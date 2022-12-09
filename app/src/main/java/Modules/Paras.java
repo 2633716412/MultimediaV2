@@ -1,6 +1,7 @@
 package Modules;
 
 import android.content.Context;
+import android.os.Handler;
 
 import com.example.multimediav2.CacheServer.ICacheServer;
 import com.example.multimediav2.PowerManager.IPowerManager;
@@ -9,16 +10,15 @@ import com.example.multimediav2.VolumeManager.IVolumeManager;
 public class Paras {
 
     //<editor-fold desc="常量">
-
+    public static Handler handler;
+    public static final int heart_time=3;
     public static final int time_start_listen_power = 60;
 
-    public static final int time_loop_power = 30;
+    public static final int time_loop_power = 60;
 
     public static final Long device_id = 10001L;
 
     public static final boolean DEVELOPMODE = true;
-
-    public static final String FILEPROVICE = "com.ningfan.fileprovider";
 
     public static final String DEVMR = "test";//mr
 
@@ -62,9 +62,10 @@ public class Paras {
     public static IMsgManager msgManager;
 
     public static boolean first = true;
-
+    //判断是否刷新节目单
     public static boolean updateProgram = false;
 
+    public static boolean[] hasRun=new boolean[3];
     //</editor-fold>
 
 }

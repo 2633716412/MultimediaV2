@@ -122,23 +122,33 @@ public class PowerManager_HaiKang implements IPowerManager {
     @Override
     public void setSystemTime(Context context) {
         try {
-            String serverStr= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getTime"+"?device_id="+Paras.device_id);
-            JSONObject obj= new JSONObject(serverStr);
-            JSONObject dataObject = obj.getJSONObject("data");
-            String time=dataObject.getString("time");
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            Date serverTime = simpleDateFormat.parse(time);
-            Date localTime = new Date();
-            float min = Math.abs(localTime.getTime() - serverTime.getTime()) / 1000f / 60f;
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        String serverStr= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getTime"+"?device_id="+Paras.device_id);
+                        JSONObject obj= new JSONObject(serverStr);
+                        JSONObject dataObject = obj.getJSONObject("data");
+                        String time=dataObject.getString("time");
+                        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                        Date serverTime = simpleDateFormat.parse(time);
+                        Date localTime = new Date();
+                        float min = Math.abs(localTime.getTime() - serverTime.getTime()) / 1000f / 60f;
 
-            String t1 = simpleDateFormat.format(serverTime);
-            String t2 = simpleDateFormat.format(localTime);
+                        String t1 = simpleDateFormat.format(serverTime);
+                        String t2 = simpleDateFormat.format(localTime);
 
-            //String msg = "服务器时间=" + t1 + " 时间戳=" + serverTime.getTime() + " ，本地时间=" + t2;
-            String msg = "设置系统时间 当前服务器时间=" + t1 + " ，当前本地时间=" + t2;
-            LogHelper.Debug(msg);
-            Paras.msgManager.SendMsg(msg);
-            InfoTimeApi.setTime(serverTime.getTime());
+                        //String msg = "服务器时间=" + t1 + " 时间戳=" + serverTime.getTime() + " ，本地时间=" + t2;
+                        String msg = "设置系统时间 当前服务器时间=" + t1 + " ，当前本地时间=" + t2;
+                        LogHelper.Debug(msg);
+                        Paras.msgManager.SendMsg(msg);
+                        InfoTimeApi.setTime(serverTime.getTime());
+                    } catch (Exception e) {
+                        LogHelper.Error(e);
+                    }
+                }
+            }).start();
+
         } catch (Exception err) {
             LogHelper.Debug("系统时间被修改异常=" + err.toString());
         }

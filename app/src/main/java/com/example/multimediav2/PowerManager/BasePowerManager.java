@@ -2,6 +2,7 @@ package com.example.multimediav2.PowerManager;
 
 import android.content.Context;
 import android.os.Build;
+import android.os.PowerManager;
 
 import com.example.multimediav2.HttpUnit.HttpUnitFactory;
 
@@ -10,8 +11,12 @@ import org.json.JSONObject;
 import java.io.DataOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import Modules.EDate;
 import Modules.LogHelper;
@@ -47,6 +52,7 @@ abstract class BasePowerManager implements IPowerManager {
         if (opening) {
             if (InShutDwonTimeArea()) {
                 try {
+                    getLock(Paras.appContext);
                     opening = false;
                     LogHelper.Debug("预设时间已到，准备关机...");
                     Paras.msgManager.SendMsg("预设时间已到，准备关机...");
@@ -63,6 +69,7 @@ abstract class BasePowerManager implements IPowerManager {
                     LogHelper.Debug("预设时间已到，准备开机...");
                     Paras.msgManager.SendMsg("预设时间已到，准备开机...");
                     Open();
+                    releaseLock();
                 } catch (Exception ex) {
                     opening = temp;
                     LogHelper.Error(ex);
@@ -150,9 +157,22 @@ abstract class BasePowerManager implements IPowerManager {
     ListenThread listenThread;
 
     public void StartListen() {
-
         listenThread = new ListenThread();
-        listenThread.start();
+        listenThread.setName("listenThread");
+        boolean hasListenThread=false;
+        Map<Thread, StackTraceElement[]> map = Thread.currentThread().getAllStackTraces();
+        if (map != null && map.size() != 0) {
+            Iterator keyIterator = map.keySet().iterator();
+            while (keyIterator.hasNext()) {
+                Thread eachThread = (Thread) keyIterator.next();
+                if(Objects.equals(eachThread.getName(), listenThread.getName())) {
+                    hasListenThread=true;
+                }
+            }
+        }
+        if(!hasListenThread) {
+            listenThread.start();
+        }
     }
 
     public void StopListen() {
@@ -162,36 +182,45 @@ abstract class BasePowerManager implements IPowerManager {
     public void setSystemTime(Context context) {
 
         try {
-            String serverStr= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getTime"+"?device_id="+Paras.device_id);
-            JSONObject obj= new JSONObject(serverStr);
-            JSONObject dataObject = obj.getJSONObject("data");
-            String time=dataObject.getString("time");
-            //Date dateTime=new Date(time);
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            Date serverTime = simpleDateFormat.parse(time);
-            SimpleDateFormat format  = new SimpleDateFormat("yyyyMMdd.HHmmss");
-            Date localTime = new Date();
-            float min = Math.abs(localTime.getTime() - serverTime.getTime()) / 1000f / 60f;
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        String serverStr= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getTime"+"?device_id="+Paras.device_id);
+                        JSONObject obj= new JSONObject(serverStr);
+                        JSONObject dataObject = obj.getJSONObject("data");
+                        String time=dataObject.getString("time");
+                        //Date dateTime=new Date(time);
+                        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                        Date serverTime = simpleDateFormat.parse(time);
+                        SimpleDateFormat format  = new SimpleDateFormat("yyyyMMdd.HHmmss");
+                        Date localTime = new Date();
+                        float min = Math.abs(localTime.getTime() - serverTime.getTime()) / 1000f / 60f;
 
-            String t2 = simpleDateFormat.format(localTime);
-            String updateTimeStr=format.format(serverTime);
-            LogHelper.Debug("服务器=" + time + " ，本地时间=" + t2);
+                        String t2 = simpleDateFormat.format(localTime);
+                        String updateTimeStr=format.format(serverTime);
+                        LogHelper.Debug("服务器=" + time + " ，本地时间=" + t2);
 
-            Process p = Runtime.getRuntime().exec("su");
-            DataOutputStream localDataOutputStream = new DataOutputStream(p.getOutputStream());
-            if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                format  = new SimpleDateFormat("MMddHHmmyyyy.ss");
-                updateTimeStr=format.format(serverTime);
-                localDataOutputStream.writeBytes("date " + updateTimeStr + " set \n");
-                localDataOutputStream.writeBytes("busybox hwclock -w\n");
-            } else {
-                localDataOutputStream.writeBytes("setprop persist.sys.timezone GMT\n");
-                localDataOutputStream.writeBytes("/system/bin/date -s " + updateTimeStr + "\n");
-                localDataOutputStream.writeBytes("clock -w\n");
-            }
-            localDataOutputStream.writeBytes("exit\n");
-            localDataOutputStream.flush();
+                        Process p = Runtime.getRuntime().exec("su");
+                        DataOutputStream localDataOutputStream = new DataOutputStream(p.getOutputStream());
+                        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                            format  = new SimpleDateFormat("MMddHHmmyyyy.ss");
+                            updateTimeStr=format.format(serverTime);
+                            localDataOutputStream.writeBytes("date " + updateTimeStr + " set \n");
+                            localDataOutputStream.writeBytes("busybox hwclock -w\n");
+                        } else {
+                            localDataOutputStream.writeBytes("setprop persist.sys.timezone GMT\n");
+                            localDataOutputStream.writeBytes("/system/bin/date -s " + updateTimeStr + "\n");
+                            localDataOutputStream.writeBytes("clock -w\n");
+                        }
+                        localDataOutputStream.writeBytes("exit\n");
+                        localDataOutputStream.flush();
+                    } catch (Exception e) {
+                        LogHelper.Error(e);
+                    }
 
+                }
+            }).start();
         } catch (Exception err) {
             LogHelper.Debug("系统时间被修改异常=" + err.toString());
         }
@@ -200,5 +229,34 @@ abstract class BasePowerManager implements IPowerManager {
     @Override
     public String GetName() {
         return "";
+    }
+
+    private PowerManager.WakeLock mWakeLock;
+    synchronized private void getLock(Context context) {
+        if (mWakeLock == null) {
+            PowerManager mgr = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+            mWakeLock = mgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, Paras.class.getName());
+            mWakeLock.setReferenceCounted(true);
+            Calendar c = Calendar.getInstance();
+            c.setTimeInMillis((System.currentTimeMillis()));
+            int hour = c.get(Calendar.HOUR_OF_DAY);
+            if (hour >= 23 || hour <= 6) {
+                mWakeLock.acquire(5000);
+            } else {
+                mWakeLock.acquire(300000);
+            }
+        }
+        LogHelper.Debug("get lock");
+    }
+
+    synchronized private void releaseLock() {
+        if (mWakeLock != null) {
+            if (mWakeLock.isHeld()) {
+                mWakeLock.release();
+                LogHelper.Debug("release lock");
+            }
+
+            mWakeLock = null;
+        }
     }
 }

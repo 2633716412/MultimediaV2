@@ -12,7 +12,7 @@ public class TextSpeaker2 implements TextToSpeech.OnInitListener {
     TextToSpeech toSpeech;
     private boolean speechOver = true;
     public TextSpeaker2(Context context) {
-        toSpeech = new TextToSpeech(context, this);
+        toSpeech = new TextToSpeech(context, TextSpeaker2.this);
         toSpeech.setOnUtteranceProgressListener(new UtteranceProgressListener() {
             int i=0;
             @Override
