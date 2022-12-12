@@ -14,7 +14,6 @@ import androidx.annotation.RequiresApi;
 
 import com.example.multimediav2.HttpUnit.HttpUnitFactory;
 import com.example.multimediav2.Utils.DateUtil;
-import com.example.multimediav2.Utils.PollingUtil;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -72,7 +71,7 @@ public class ShowActivity extends BaseActivity {
         webSetting2.setMediaPlaybackRequiresUserGesture(false);
         //webView2.getBackground().setAlpha(0); // 设置填充透明度 范围：0-255
         //webView2.loadUrl("http://192.168.9.201:14084/selfpc2/app/index.html?id=10024");
-        PollingUtil pollingUtil=new PollingUtil(Paras.handler);
+        //PollingUtil pollingUtil=new PollingUtil(Paras.handler);
         Thread playThread=new Thread(new Runnable() {
             @Override
             public void run() {

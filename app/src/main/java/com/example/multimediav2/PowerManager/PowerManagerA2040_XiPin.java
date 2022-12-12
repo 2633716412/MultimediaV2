@@ -34,6 +34,7 @@ public class PowerManagerA2040_XiPin extends BasePowerManager{
             DataOutputStream localDataOutputStream = new DataOutputStream(p.getOutputStream());
             //localDataOutputStream.writeBytes("echo 10000 > sys/class/rtc/rtc0/wakealarm\n");
             //localDataOutputStream.writeBytes("echo mem > /sys/power/state\n");
+
             localDataOutputStream.writeBytes("echo standby >/sys/power/state\n");
             localDataOutputStream.writeBytes("exit\n");
             localDataOutputStream.flush();
