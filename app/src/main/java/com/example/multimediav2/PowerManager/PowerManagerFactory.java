@@ -12,7 +12,7 @@ public class PowerManagerFactory {
         } else if (Paras.DEVA40_XiPin.equals(Paras.devType)) {
             return new PowerManagerA2040_XiPin(Paras.appContext);
         } else if (Paras.DEVA20_XiPin.equals(Paras.devType)) {
-            return new PowerManagerA2040_XiPin(Paras.appContext);
+            return new PowerManagerA20_XiPin(Paras.appContext);
         } else if ("hk".equals(Paras.devType)) {
             return new PowerManager_HaiKang(Paras.appContext);
         }

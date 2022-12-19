@@ -31,7 +31,11 @@
         tools:ignore="ProtectedPermissions" />
     <!--<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />-->
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
+    <uses-permission android:name="android.permission.DEVICE_POWER"
+        tools:ignore="ProtectedPermissions" />
     <queries>
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE" />
@@ -59,37 +63,20 @@
             </intent-filter>
         </activity>
 
-
-        <service android:name="com.example.multimediav2.AppService"
-            android:process=":AppService"
+        <receiver
+            android:name="com.example.multimediav2.Models.MyBroadcastReceiver"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_DEVICE_ADMIN"
             android:exported="true">
-        <intent-filter android:priority="1000">
-            <!-- 系统启动完成后会调用-->
-            <action android:name="android.intent.action.BOOT_COMPLETED"/>
-            <action android:name="android.intent.action.DATE_CHANGED"/>
-            <action android:name="android.intent.action.MEDIA_MOUNTED" />
-            <action android:name="android.intent.action.USER_PRESENT" />
-            <action android:name="android.intent.action.ACTION_TIME_TICK" />
-            <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
-            <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" />
-        </intent-filter>
-        </service>
+            <meta-data
+                android:name="android.app.device_admin"
+                android:resource="@xml/device_admin" />
 
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
 
-        <service android:name="com.example.multimediav2.AppService2"
-        android:process=":AppService2"
-            android:exported="true">
-        <intent-filter >
-            <!-- 系统启动完成后会调用-->
-            <action android:name="android.intent.action.BOOT_COMPLETED"/>
-            <action android:name="android.intent.action.DATE_CHANGED"/>
-            <action android:name="android.intent.action.MEDIA_MOUNTED" />
-            <action android:name="android.intent.action.USER_PRESENT" />
-            <action android:name="android.intent.action.ACTION_TIME_TICK" />
-            <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
-            <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" />
-        </intent-filter>
-        </service>
         <receiver
             android:name="Modules.BootCompleteReceiver"
             android:enabled="true"

@@ -3,7 +3,10 @@ package com.example.multimediav2.Models;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Build;
+import android.os.PowerManager;
 import android.os.SystemClock;
+
+import androidx.annotation.RequiresApi;
 
 import com.example.multimediav2.BaseActivity;
 import com.example.multimediav2.CacheServer.CacheServerFactory;
@@ -48,6 +51,7 @@ public class CmdManager {
     static boolean firstShut=true;
 
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     public void Init(final Context context, final Action<String> OnIniEnd) {
         //Handler handler=new Handler();
         final SPUnit spUnit = new SPUnit(context);
@@ -57,6 +61,21 @@ public class CmdManager {
         Paras.name = deviceData.getDevice_name();
         Paras.cacheServer = CacheServerFactory.Get(context);
         Paras.devType=deviceData.device_type;
+        //获取海康白名单
+        /*if(Objects.equals(deviceData.device_type, "hk")) {
+            LogHelper.Debug(deviceData.device_type+Paras.appContext.getPackageName());
+            int state=InfoUtilApi.setWhiteListState(true);
+            if(state==0) {
+                LogHelper.Debug("海康白名单功能开启成功");
+            }
+            int res=InfoUtilApi.addWhiteList("com.example.multimediav2");
+            if(res==0) {
+                LogHelper.Debug("白名单添加成功");
+            }
+            boolean isWhite=InfoUtilApi.isInWhiteList("com.example.multimediav2");
+            LogHelper.Debug("是否在白名单"+isWhite);
+        }*/
+        //isIgnoringBatteryOptimizations();
         deviceData.setMac(MacUnit.GetMac(context));
         //保存设备信息
         Thread thread = new Thread(new Runnable() {
@@ -218,7 +237,8 @@ public class CmdManager {
                                                     int endIndex=Paras.mulAPIAddr.lastIndexOf("/");
                                                     String url=Paras.mulAPIAddr.substring(0,endIndex);
                                                     JSONObject finalContentObject = contentObject;
-
+                                                    String dir1 = context.getExternalFilesDir("nf").getPath();
+                                                    deleteFile(dir1);
                                                     HttpUnitFactory.Get().DownLoad(url+contentObject.getString("filePath"), context.getExternalFilesDir("nf").getPath(), contentObject.getString("fileName"), new Action<Long>() {
                                                         @Override
                                                         public void Excute(Long value) {
@@ -476,5 +496,35 @@ public class CmdManager {
             Paras.hasRun[2]=true;
         }
     }
-
+    public static void deleteFile(String path) {
+        File file = new File(path);
+        // 获取当前目录下的目录和文件
+        File[] listFiles = file.listFiles();
+        for (File f:listFiles) {
+            //判断是否是目录
+            if (f.isDirectory()) {
+                //是目录，进入目录继续删除
+                String path2 = f.getPath();
+                deleteFile(path2);
+            }else {
+                //符合文件类型 调用delete()方法删除
+                String fileType = f.getName().substring(f.getName().lastIndexOf(".")+1);
+                if(fileType.equals("apk")){
+                    LogHelper.Debug("删除文件：" + f.getAbsolutePath());
+                    f.delete();
+                }
+            }
+        }
+    }
+    //判断是否在白名单
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private boolean isIgnoringBatteryOptimizations() {
+        boolean isIgnoring = false;
+        PowerManager powerManager = (PowerManager) Paras.appContext.getSystemService(Context.POWER_SERVICE);
+        if (powerManager != null) {
+            isIgnoring = powerManager.isIgnoringBatteryOptimizations(Paras.appContext.getPackageName());
+        }
+        LogHelper.Debug("是否在白名单："+isIgnoring);
+        return isIgnoring;
+    }
 }

@@ -1,12 +1,22 @@
 package com.example.multimediav2.PowerManager;
 
+import static android.content.Context.POWER_SERVICE;
+
+import android.annotation.SuppressLint;
+import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.PowerManager;
+import android.view.View;
 
+import androidx.annotation.RequiresApi;
 import androidx.core.content.FileProvider;
+
+import com.example.multimediav2.BaseActivity;
+import com.example.multimediav2.Models.MyBroadcastReceiver;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -17,7 +27,9 @@ import Modules.Paras;
 
 
 public class PowerManagerA2040_XiPin extends BasePowerManager{
-
+    private ComponentName adminReceiver;
+    private PowerManager mPowerManager;
+    private DevicePolicyManager policyManager;
     Context context;
 
     public PowerManagerA2040_XiPin(Context context) {
@@ -25,7 +37,7 @@ public class PowerManagerA2040_XiPin extends BasePowerManager{
         this.context = context;
     }
 
-    @Override
+    /*@Override
     public void ShutDown() {
 
         try {
@@ -41,6 +53,20 @@ public class PowerManagerA2040_XiPin extends BasePowerManager{
             p.waitFor();
             int ret = p.exitValue();
             LogHelper.Debug(ret + "");
+        } catch (Exception ex) {
+            LogHelper.Error(ex);
+        }
+    }*/
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    @Override
+    public void ShutDown() {
+
+        try {
+            adminReceiver= new ComponentName(Paras.appContext, MyBroadcastReceiver.class);
+            mPowerManager=(PowerManager) Paras.appContext.getSystemService(POWER_SERVICE);
+            policyManager=(DevicePolicyManager) Paras.appContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
+            checkAndTurnOnDeviceManager(null);
+            checkScreenOff(null);
         } catch (Exception ex) {
             LogHelper.Error(ex);
         }
@@ -125,5 +151,53 @@ public class PowerManagerA2040_XiPin extends BasePowerManager{
 
             mWakeLock = null;
         }
+    }
+    /**
+     * @param view 检测屏幕状态
+     */
+    public void checkScreen(View view) {
+        PowerManager pm = (PowerManager) Paras.appContext.getSystemService(POWER_SERVICE);
+        boolean screenOn = pm.isScreenOn();
+        if (!screenOn) {//如果灭屏
+            //相关操作
+            LogHelper.Debug("屏幕是息屏");
+        } else {
+            LogHelper.Debug("屏幕是亮屏");
+
+        }
+    }
+
+
+    /**
+     * @param view 亮屏
+     */
+    @SuppressLint("InvalidWakeLockTag")
+    public void checkScreenOn(View view) {
+        mWakeLock = mPowerManager.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP, "tag");
+        mWakeLock.acquire();
+        mWakeLock.release();
+    }
+
+    /**
+     * @param view 熄屏
+     */
+    public void checkScreenOff(View view) {
+        boolean admin = policyManager.isAdminActive(adminReceiver);
+        policyManager.lockNow();
+        if (admin) {
+            policyManager.lockNow();
+        } else {
+            LogHelper.Debug("没有设备管理权限");
+        }
+    }
+    /**
+     * @param view 检测并去激活设备管理器权限
+     */
+    public void checkAndTurnOnDeviceManager(View view) {
+        Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
+        intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminReceiver);
+        //intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "开启后就可以使用锁屏功能了...");//显示位置见图二
+        BaseActivity.currActivity.startActivityForResult(intent, 0);
+
     }
 }

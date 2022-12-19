@@ -75,12 +75,6 @@ public class ShowActivity extends BaseActivity {
         Thread playThread=new Thread(new Runnable() {
             @Override
             public void run() {
-                /*new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-
-                    }
-                }).start();*/
                 if(deviceData.getId()>0) {
                     GetProgramData(deviceData.getId());
                     while (true) {
@@ -88,6 +82,13 @@ public class ShowActivity extends BaseActivity {
                         if(Paras.updateProgram) {
                             endTime=GetProgramData(deviceData.getId());
                             Paras.updateProgram=false;
+                            try {
+                                Thread.currentThread();
+                                Thread.sleep(3000);
+                                continue;
+                            } catch (InterruptedException e) {
+                                LogHelper.Error(e);
+                            }
                         }
                         if(nowTime.getTime()>endTime.getTime()) {
                             Paras.updateProgram=true;
@@ -96,7 +97,6 @@ public class ShowActivity extends BaseActivity {
                 }
             }
         });
-        //pollingUtil.startPolling(playThread,3000);
         playThread.start();
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -137,7 +137,6 @@ public class ShowActivity extends BaseActivity {
                 jsonStr = HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getProgramData?device_id=" + id);
             } catch (Exception e) {
                 LogHelper.Error("获取节目异常："+e);
-                Paras.updateProgram=true;
             }
             if(!Objects.equals(jsonStr, "")) {
                 JSONObject object = new JSONObject(jsonStr);
@@ -195,7 +194,6 @@ public class ShowActivity extends BaseActivity {
                     });
                 }
             }
-            //Thread.sleep(3000);
         } catch (Exception e) {
             LogHelper.Error(e);
         }

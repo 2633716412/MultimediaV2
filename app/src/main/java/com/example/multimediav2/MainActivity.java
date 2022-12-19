@@ -1,14 +1,17 @@
 package com.example.multimediav2;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.Settings;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -16,6 +19,8 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.RequiresApi;
 
 import com.example.multimediav2.HttpUnit.HttpUnitFactory;
 import com.example.multimediav2.Models.CmdManager;
@@ -51,6 +56,7 @@ public class MainActivity extends BaseActivity implements IMsgManager {
     private Button btu_save;
     private TextView switch_text;
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,11 +64,8 @@ public class MainActivity extends BaseActivity implements IMsgManager {
         Paras.appContext=this;
         Paras.msgManager=this;
         Paras.handler=new Handler();
-        /*startService(new Intent(this, AppService.class));
-        startService(new Intent(this, AppService2.class));*/
-        /*Intent intent = new Intent(Paras.appContext, AppService.class);
-        startService(intent);*/
-        Paras.androidNumber= "Android"+android.os.Build.VERSION.RELEASE;
+
+        Paras.androidNumber= "Android"+ Build.VERSION.RELEASE;
         Paras.Wiidth = getResources().getDisplayMetrics().widthPixels;
         Paras.Height = getResources().getDisplayMetrics().heightPixels;
         checkPermission();
@@ -159,7 +162,23 @@ public class MainActivity extends BaseActivity implements IMsgManager {
                     device_type.setSelection(i);
                 }
             }
+            //获取本地ip
+            WifiManager wifiManager = (WifiManager) Paras.appContext.getSystemService(Paras.appContext.WIFI_SERVICE);
+            WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+            if (!wifiManager.isWifiEnabled()) {
+                wifiManager.setWifiEnabled(true);
+            }
 
+            int ipAddress = wifiInfo.getIpAddress();
+            if(!intToIp(ipAddress).equals("0.0.0.0")) {
+                deviceData.setDevice_ip(intToIp(ipAddress));
+            } else {
+                String ip=getLocalIpAddress();
+                deviceData.setDevice_ip(ip);
+            }
+            if(deviceData.getDevice_ip()!=null&& !Objects.equals(deviceData.getDevice_ip(), "")) {
+                spUnit.Set("DeviceData",deviceData);
+            }
             if (Paras.first) {
                 CmdManager iIniHanlder = new CmdManager();
                 iIniHanlder.Init(MainActivity.this, null);
@@ -352,5 +371,17 @@ public class MainActivity extends BaseActivity implements IMsgManager {
         String headStr=oldUrl.substring(0,oldUrl.indexOf("//")+2);
         newStr=headStr+ip+":"+port+"/"+urlSuffix+tallStr;
         return newStr;
+    }
+
+    //申请白名单
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    public void requestIgnoreBatteryOptimizations() {
+        try {
+            @SuppressLint("BatteryLife") Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+            intent.setData(Uri.parse("package:" + getPackageName()));
+            startActivity(intent);
+        } catch (Exception e) {
+            LogHelper.Error("申请白名单失败："+e);
+        }
     }
 }

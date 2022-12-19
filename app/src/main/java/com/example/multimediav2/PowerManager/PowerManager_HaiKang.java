@@ -7,6 +7,7 @@ import android.content.Intent;
 
 import com.example.multimediav2.HttpUnit.HttpUnitFactory;
 import com.hikvision.dmb.TimeSwitchConfig;
+import com.hikvision.dmb.display.InfoDisplayApi;
 import com.hikvision.dmb.system.InfoSystemApi;
 import com.hikvision.dmb.time.InfoTimeApi;
 import com.hikvision.dmb.util.InfoUtilApi;
@@ -107,11 +108,17 @@ public class PowerManager_HaiKang implements IPowerManager {
 
     @Override
     public void ShutDown() {
-        InfoSystemApi.shutdown();
+        //息屏
+        InfoDisplayApi.disableBacklight();
+        //关机
+        //InfoSystemApi.shutdown();
     }
 
     @Override
     public void Open() {
+        /*int res=InfoSystemApi.execCommand("sudo su\nfile /sys/power/state\ncat /sys/power/state\necho on > /sys/power/state\nexit\n");
+        LogHelper.Debug("shell结果："+res);*/
+        InfoDisplayApi.enableBacklight();
     }
 
     @Override
