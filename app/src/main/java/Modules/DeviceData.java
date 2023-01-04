@@ -6,6 +6,10 @@ import java.util.List;
 public class DeviceData {
     public Long id=0L;
 
+    public String sn="";
+
+    public Long orgId=0L;
+
     public String device_name = "";
 
     public String device_type = "";
@@ -30,6 +34,14 @@ public class DeviceData {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getOrgId() {
+        return orgId;
+    }
+
+    public void setOrgId(Long orgId) {
+        this.orgId = orgId;
     }
 
     public void setOsTimes(List<OSTime> osTimes) {
@@ -82,6 +94,14 @@ public class DeviceData {
 
     public void setApi_port(String api_port) {
         this.api_port = api_port;
+    }
+
+    public String getSn() {
+        return sn;
+    }
+
+    public void setSn(String sn) {
+        this.sn = sn;
     }
 
     @Override

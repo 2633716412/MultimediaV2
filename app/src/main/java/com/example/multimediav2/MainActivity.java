@@ -13,6 +13,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.provider.Settings;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -26,6 +27,7 @@ import com.example.multimediav2.HttpUnit.HttpUnitFactory;
 import com.example.multimediav2.Models.CmdManager;
 import com.example.multimediav2.Models.DropData;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.net.Inet4Address;
@@ -33,9 +35,12 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import Modules.DeviceData;
 import Modules.IMsgManager;
@@ -55,7 +60,7 @@ public class MainActivity extends BaseActivity implements IMsgManager {
     private Spinner device_type;
     private Button btu_save;
     private TextView switch_text;
-
+    private Spinner spinner;
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,6 +78,7 @@ public class MainActivity extends BaseActivity implements IMsgManager {
         DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
         device_type=findViewById(R.id.device_type);
         switch_text=findViewById(R.id.switch_text);
+        spinner=findViewById(R.id.spinner);
         List<DropData> dropList=new ArrayList<DropData>();
         DropData dev0=new DropData("test","TEST");
         dropList.add(dev0);
@@ -259,7 +265,7 @@ public class MainActivity extends BaseActivity implements IMsgManager {
                             }
                         }
                     }).start();
-
+                    data.setSn(getUniquePsuedoID());
                     spUnit.Set("DeviceData",data);
                     CmdManager iIniHanlder = new CmdManager();
                     iIniHanlder.Init(MainActivity.this, null);
@@ -273,6 +279,89 @@ public class MainActivity extends BaseActivity implements IMsgManager {
             }
         });
 
+        //获取机构下拉
+        inter1=findViewById(R.id.inter1);
+        inter2=findViewById(R.id.inter2);
+        inter3=findViewById(R.id.inter3);
+        inter4=findViewById(R.id.inter4);
+        port=findViewById(R.id.port);
+        if(inter1.getText()!=null&&inter2.getText()!=null&&inter3.getText()!=null&&inter3.getText()!=null&&port.getText()!=null) {
+            StringBuilder ipStr=new StringBuilder(inter1.getText().toString());
+            ipStr.append(".");
+            ipStr.append(inter2.getText().toString());
+            ipStr.append(".");
+            ipStr.append(inter3.getText().toString());
+            ipStr.append(".");
+            ipStr.append(inter4.getText().toString());
+            String apiIp=ipStr.toString();
+            String apiPort=port.getText().toString();
+
+            new Thread(new Runnable() {
+                @RequiresApi(api = Build.VERSION_CODES.N)
+                @Override
+                public void run() {
+                    boolean isStopped=false;
+                    while (!isStopped) {
+                        Paras.mulAPIAddr=GetApiUrl(Paras.mulAPIAddr,apiIp,apiPort);
+                        try {
+                            String result= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/orgList");
+                            if(!Objects.equals(result, "")) {
+                                JSONObject object = new JSONObject(result);
+                                JSONArray jsonArray = object.getJSONArray("data");
+                                ArrayList<DropData> list=new ArrayList<DropData>();
+                                for(int i=0;i<jsonArray.length();i++) {
+                                    DropData dropdata=new DropData();
+                                    JSONObject obj = jsonArray.getJSONObject(i);
+                                    dropdata.setId(obj.getLong("id"));
+                                    dropdata.setName(obj.getString("org_name"));
+                                    list.add(dropdata);
+                                }
+                                ArrayAdapter<DropData> adapter=new ArrayAdapter<DropData>(Paras.appContext, androidx.appcompat.R.layout.support_simple_spinner_dropdown_item,list);
+                                spinner.setAdapter(adapter);
+                                        /*spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                                            @Override
+                                            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+
+                                            }
+
+                                            @Override
+                                            public void onNothingSelected(AdapterView<?> parent) {
+
+                                            }
+                                        });*/
+                                if(deviceData.getOrgId()>0) {
+                                    DropData d=  list.stream().filter(p-> Objects.equals(p.getId(), deviceData.getOrgId())).collect(Collectors.toList()).get(0);
+                                    spinner.setSelection(list.indexOf(d));
+                                }
+
+                                spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                                    @Override
+                                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                                        DropData data= (DropData) spinner.getSelectedItem();
+                                        deviceData.setOrgId(data.getId());
+                                        spUnit.Set("DeviceData",deviceData);
+                                    }
+
+                                    @Override
+                                    public void onNothingSelected(AdapterView<?> parent) {
+
+                                    }
+                                });
+
+                                isStopped=true;
+                            }
+                        } catch (Exception e) {
+                            LogHelper.Error("获取机构列表异常："+e);
+                        }
+                        try {
+                            Thread.sleep(5000);
+                        } catch (Exception e) {
+                            LogHelper.Error(e);
+                        }
+                    }
+                }
+            }).start();
+        }
         final Button btn_tts = findViewById(R.id.btu_tts);
         btn_tts.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -383,5 +472,46 @@ public class MainActivity extends BaseActivity implements IMsgManager {
         } catch (Exception e) {
             LogHelper.Error("申请白名单失败："+e);
         }
+    }
+
+    //获取设备唯一标识，卸载重装后依然能获得唯一值
+    public static String getUniquePsuedoID() {
+
+        String[] supportedABIArray;
+        if (Build.VERSION.SDK_INT >= 21) {
+            supportedABIArray = Build.SUPPORTED_ABIS;
+        } else {
+            supportedABIArray = new String[] {Build.CPU_ABI};
+        }
+
+        String supportedABIs = "";
+        try {
+            for (String s : supportedABIArray) {
+                supportedABIs += s;
+            }
+        } catch (Exception e) {
+            supportedABIs = "";
+        }
+
+        String m_szDevIDShort = "35";
+        if (null != Build.BOARD) m_szDevIDShort += (Build.BOARD.length() % 10);
+        if (null != Build.BRAND) m_szDevIDShort += (Build.BRAND.length() % 10);
+        m_szDevIDShort += (supportedABIs.length() % 10);
+        if (null != Build.DEVICE) m_szDevIDShort += (Build.DEVICE.length() % 10);
+        if (null != Build.MANUFACTURER) m_szDevIDShort += (Build.MANUFACTURER.length() % 10);
+        if (null != Build.MODEL) m_szDevIDShort += (Build.MODEL.length() % 10);
+        if (null != Build.PRODUCT) m_szDevIDShort += (Build.PRODUCT.length() % 10);
+
+        String serial = null;
+        try {
+            serial = android.os.Build.class.getField("SERIAL").get(null).toString();
+
+            return new UUID(m_szDevIDShort.hashCode(), serial.hashCode()).toString();
+        } catch (Exception exception) {
+
+            serial = "" + Calendar.getInstance().getTimeInMillis();
+        }
+
+        return new UUID(m_szDevIDShort.hashCode(), serial.hashCode()).toString();
     }
 }

@@ -13,6 +13,7 @@ import android.widget.Button;
 import androidx.annotation.RequiresApi;
 
 import com.example.multimediav2.HttpUnit.HttpUnitFactory;
+import com.example.multimediav2.Utils.Base64FileUtil;
 import com.example.multimediav2.Utils.DateUtil;
 
 import org.json.JSONArray;
@@ -199,6 +200,36 @@ public class ShowActivity extends BaseActivity {
         }
         return date;
     }
+    @Override
+    public void onResume() {
+        super.onResume();
 
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(5000);
+                    SPUnit spUnit = new SPUnit(Paras.appContext);
+                    DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
+                    LogHelper.Debug("截屏开始");
+                    String picPath = BaseActivity.Screenshot();
+                    String base64Str = Base64FileUtil.encodeBase64File(picPath);
+                    JSONObject uploadObject=new JSONObject();
+                    uploadObject.put("device_id",deviceData.getId());
+                    uploadObject.put("fileFormat",".jpg");
+                    uploadObject.put("base64Str",base64Str);
+                    String res = HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/uploadFile",uploadObject.toString());
+                    JSONObject resObj= new JSONObject(res);
+                    if(!resObj.getBoolean("success")) {
+                        LogHelper.Error("截屏失败：" + picPath);
+                    }
+                    LogHelper.Debug("截屏完成：" + picPath);
+                } catch (Exception e) {
+                    LogHelper.Error("截屏失败："+e.getMessage());
+                }
+            }
+        }).start();
+
+    }
 
 }

@@ -1,7 +1,6 @@
 package com.example.multimediav2.Models;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.PowerManager;
 import android.os.SystemClock;
@@ -20,13 +19,11 @@ import com.example.multimediav2.Utils.PollingUtil;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -91,6 +88,8 @@ public class CmdManager {
                         jsonObject.put("mac",deviceData.getMac());
                         String androidNumStr="Android "+ Build.VERSION.RELEASE;
                         jsonObject.put("os",androidNumStr);
+                        jsonObject.put("sn",deviceData.getSn());
+                        jsonObject.put("org_id",deviceData.getOrgId());
                         String jsonStr="";
                         try {
                             jsonStr= HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/sava",jsonObject.toString());
@@ -161,7 +160,14 @@ public class CmdManager {
                                     JSONObject timeObject= new JSONObject(updateRes);
                                     boolean res = timeObject.getBoolean("success");
                                     if(res) {
-                                        LogHelper.Debug("更新心跳时间成功");
+                                        if (Paras.num==0) {
+                                            LogHelper.Debug("更新心跳时间成功");
+                                            Paras.num++;
+                                            if(Paras.num>=5) {
+                                                Paras.num=0;
+                                            }
+                                        }
+
                                     }
                                 }
                                 try {
@@ -197,6 +203,19 @@ public class CmdManager {
                                                 break;
                                             case "1005":
                                                 LogHelper.Debug("截屏开始");
+                                                String picPath = BaseActivity.Screenshot();
+                                                String base64Str = Base64FileUtil.encodeBase64File(picPath);
+                                                JSONObject uploadObject=new JSONObject();
+                                                uploadObject.put("device_id",deviceData.getId());
+                                                uploadObject.put("fileFormat",".jpg");
+                                                uploadObject.put("base64Str",base64Str);
+                                                String res = HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/uploadFile",uploadObject.toString());
+                                                JSONObject resObj= new JSONObject(res);
+                                                if(!resObj.getBoolean("success")) {
+                                                    LogHelper.Error("截屏失败：" + picPath);
+                                                }
+                                                LogHelper.Debug("截屏完成：" + picPath);
+                                                /*LogHelper.Debug("截屏开始");
                                                 Bitmap bmp = BaseActivity.Screenshot();
                                                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
                                                 bmp.compress(Bitmap.CompressFormat.JPEG, 80, stream);
@@ -217,7 +236,7 @@ public class CmdManager {
                                                 if(!resObj.getBoolean("success")) {
                                                     LogHelper.Error("截屏失败：" + dir + "/" + fn);
                                                 }
-                                                LogHelper.Debug("截屏完成：" + dir + "/" + fn);
+                                                LogHelper.Debug("截屏完成：" + dir + "/" + fn);*/
                                                 break;
                                             case "1006":
                                                 Paras.volume = contentObject.getInt("volume");
@@ -336,6 +355,14 @@ public class CmdManager {
                                                 LogHelper.Debug("开始呼叫：" + voiceTxt);
                                                 textSpeaker2.read(voiceTxt);
                                                 break;
+                                            case "1014":
+                                                String templateCode=contentObject.getString("templateCode");
+                                                Long voiceVolume=contentObject.getLong("voiceVolume");
+                                                String voiceDate=contentObject.getString("voiceDate");
+                                                Long voiceSpeed=contentObject.getLong("voiceSpeed");
+                                                Paras.volume= Math.toIntExact(voiceVolume);
+                                                textSpeaker2.setSpeed(voiceSpeed);
+                                                break;
                                             case "1033":
                                                 File logFile=new File(LogHelper.logFilePath);
                                                 FileWriter fileWriter=new FileWriter(logFile);
@@ -448,7 +475,7 @@ public class CmdManager {
 
         //默认30分钟截屏一次
 
-        Thread shutThread=new Thread(new Runnable() {
+        /*Thread shutThread=new Thread(new Runnable() {
             @Override
             public void run() {
                 new Thread(new Runnable() {
@@ -494,7 +521,7 @@ public class CmdManager {
         if(!Paras.hasRun[2]) {
             pollingUtil.startPolling(shutThread,1800000,true);
             Paras.hasRun[2]=true;
-        }
+        }*/
     }
     public static void deleteFile(String path) {
         File file = new File(path);

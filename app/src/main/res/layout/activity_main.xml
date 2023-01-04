@@ -137,6 +137,23 @@
             android:layout_marginTop="20dp"
             android:gravity="center"
             android:orientation="horizontal">
+            <TextView
+                android:layout_width="75dp"
+                android:textColor="@color/black"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:text="@string/org_name"/>
+            <Spinner
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/spinner"/>
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:gravity="center"
+            android:orientation="horizontal">
             <Button
                 android:layout_width="100dp"
                 android:layout_height="wrap_content"

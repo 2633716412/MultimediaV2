@@ -3,6 +3,7 @@
     <string name="device_name">设备名称：</string>
     <string name="device_type">设备类型：</string>
     <string name="device_port">端口：</string>
+    <string name="org_name">请选择机构：</string>
     <string name="device_ip">IP：</string>
     <string name="btu_save">保存</string>
     <string name="btu_tts">TTS设置</string>

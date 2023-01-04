@@ -1,6 +1,5 @@
 package com.example.multimediav2.Models;
 
-import android.graphics.Bitmap;
 import android.os.SystemClock;
 
 import com.example.multimediav2.BaseActivity;
@@ -12,13 +11,11 @@ import com.example.multimediav2.Utils.Base64FileUtil;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -99,17 +96,8 @@ public class MyThread extends Thread {
                                         break;
                                     case "1005":
                                         LogHelper.Debug("截屏开始");
-                                        Bitmap bmp = BaseActivity.Screenshot();
-                                        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                                        bmp.compress(Bitmap.CompressFormat.JPEG, 80, stream);
-                                        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
-                                        String fn = formatter.format(new Date()) + ".jpg";
-                                        //String dir = Environment.getExternalStorageDirectory() + "/nf";
-                                        File fileSave = Paras.appContext.getExternalFilesDir("nf");
-                                        String dir=fileSave.getPath();
-                                        File file=new File(dir,fn);
-                                        fileUnitDef.Save(dir, fn, stream.toByteArray());
-                                        String base64Str = Base64FileUtil.encodeBase64File(file.getPath());
+                                        String picPath = BaseActivity.Screenshot();
+                                        String base64Str = Base64FileUtil.encodeBase64File(picPath);
                                         JSONObject uploadObject=new JSONObject();
                                         uploadObject.put("device_id",deviceData.getId());
                                         uploadObject.put("fileFormat",".jpg");
@@ -117,9 +105,31 @@ public class MyThread extends Thread {
                                         String res = HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/uploadFile",uploadObject.toString());
                                         JSONObject resObj= new JSONObject(res);
                                         if(!resObj.getBoolean("success")) {
-                                            LogHelper.Error("截屏失败：" + dir + "/" + fn);
+                                            LogHelper.Error("截屏失败：" + picPath);
                                         }
-                                        LogHelper.Debug("截屏完成：" + dir + "/" + fn);
+                                        LogHelper.Debug("截屏完成：" + picPath);
+                                                /*LogHelper.Debug("截屏开始");
+                                                Bitmap bmp = BaseActivity.Screenshot();
+                                                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                                                bmp.compress(Bitmap.CompressFormat.JPEG, 80, stream);
+                                                SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+                                                String fn = formatter.format(new Date()) + ".jpg";
+                                                //String dir = Environment.getExternalStorageDirectory() + "/nf";
+                                                File fileSave = context.getExternalFilesDir("nf");
+                                                String dir=fileSave.getPath();
+                                                File file=new File(dir,fn);
+                                                fileUnitDef.Save(dir, fn, stream.toByteArray());
+                                                String base64Str = Base64FileUtil.encodeBase64File(file.getPath());
+                                                JSONObject uploadObject=new JSONObject();
+                                                uploadObject.put("device_id",deviceData.getId());
+                                                uploadObject.put("fileFormat",".jpg");
+                                                uploadObject.put("base64Str",base64Str);
+                                                String res = HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/uploadFile",uploadObject.toString());
+                                                JSONObject resObj= new JSONObject(res);
+                                                if(!resObj.getBoolean("success")) {
+                                                    LogHelper.Error("截屏失败：" + dir + "/" + fn);
+                                                }
+                                                LogHelper.Debug("截屏完成：" + dir + "/" + fn);*/
                                         break;
                                     case "1006":
                                         Paras.volume = contentObject.getInt("volume");
