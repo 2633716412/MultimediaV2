@@ -96,6 +96,8 @@ public class BaseActivity extends Activity {
 
     public static String Screenshot() {
         File file= Paras.appContext.getExternalFilesDir("nf");
+        String dir1 = file.getPath();
+        deleteFile(dir1,"jpg");
         try {
 
             if (currActivity != null) {
@@ -198,5 +200,25 @@ public class BaseActivity extends Activity {
         } catch (OutOfMemoryError ex) {
         }
         return null;
+    }
+    private static void deleteFile(String path, String type) {
+        File file = new File(path);
+        // 获取当前目录下的目录和文件
+        File[] listFiles = file.listFiles();
+        for (File f:listFiles) {
+            //判断是否是目录
+            if (f.isDirectory()) {
+                //是目录，进入目录继续删除
+                String path2 = f.getPath();
+                deleteFile(path2,"");
+            }else {
+                //符合文件类型 调用delete()方法删除
+                String fileType = f.getName().substring(f.getName().lastIndexOf(".")+1);
+                if(fileType.equals(type)){
+                    LogHelper.Debug("删除文件：" + f.getAbsolutePath());
+                    f.delete();
+                }
+            }
+        }
     }
 }

@@ -1,9 +1,11 @@
 package com.example.multimediav2.Models;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.PowerManager;
 import android.os.SystemClock;
+import android.view.View;
 
 import androidx.annotation.RequiresApi;
 
@@ -15,15 +17,18 @@ import com.example.multimediav2.PowerManager.PowerManagerFactory;
 import com.example.multimediav2.Utils.AudioUtil;
 import com.example.multimediav2.Utils.Base64FileUtil;
 import com.example.multimediav2.Utils.PollingUtil;
+import com.hikvision.dmb.display.InfoDisplayApi;
 
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -82,7 +87,6 @@ public class CmdManager {
                 while (!isStopped) {
                     try {
                         JSONObject jsonObject=new JSONObject();
-                        jsonObject.put("id",deviceData.getId());
                         jsonObject.put("device_name",deviceData.getDevice_name());
                         jsonObject.put("device_ip",deviceData.getDevice_ip());
                         jsonObject.put("mac",deviceData.getMac());
@@ -103,10 +107,8 @@ public class CmdManager {
                             if(!res) {
                                 LogHelper.Error("保存失败"+object.getString("msg"));
                             }
-                            if(deviceData.getId()<=0) {
-                                deviceData.setId(object.getLong("data"));
-                                spUnit.Set("DeviceData",deviceData);
-                            }
+                            deviceData.setId(object.getLong("data"));
+                            spUnit.Set("DeviceData",deviceData);
                         }
                     } catch (Exception e) {
                         LogHelper.Error(e);
@@ -143,11 +145,11 @@ public class CmdManager {
                     @Override
                     public void run() {
                         try {
-                            while (deviceData.getId()>0) {
+                            while (!Objects.equals(deviceData.getSn(), "")) {
                                 String jsonStr="";
                                 //更新心跳时间
                                 JSONObject updateObject=new JSONObject();
-                                updateObject.put("device_id",deviceData.getId());
+                                updateObject.put("sn",deviceData.getSn());
                                 updateObject.put("is_record",1);
                                 String updateRes="";
                                 try {
@@ -171,7 +173,7 @@ public class CmdManager {
                                     }
                                 }
                                 try {
-                                    jsonStr= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getCmd"+"?device_id="+deviceData.getId());
+                                    jsonStr= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getCmd"+"?sn="+deviceData.getSn());
                                 } catch (Exception e) {
                                     LogHelper.Error("获取命令异常："+e);
                                 }
@@ -203,8 +205,27 @@ public class CmdManager {
                                                 break;
                                             case "1005":
                                                 LogHelper.Debug("截屏开始");
-                                                String picPath = BaseActivity.Screenshot();
-                                                String base64Str = Base64FileUtil.encodeBase64File(picPath);
+                                                String base64Str="";
+                                                String picPath=Paras.appContext.getExternalFilesDir("nf").getPath();
+                                                if("hk".equals(Paras.devType)) {
+                                                    deleteFile(picPath,"jpg");
+                                                    View dView = BaseActivity.currActivity.getWindow().getDecorView();
+                                                    Bitmap bmp=InfoDisplayApi.screenShot(dView.getHeight(),dView.getWidth());
+                                                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                                                    bmp.compress(Bitmap.CompressFormat.JPEG, 80, stream);
+                                                    SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+                                                    String fn = formatter.format(new Date()) + ".jpg";
+                                                    File fileSave = context.getExternalFilesDir("nf");
+                                                    String dir=fileSave.getPath();
+                                                    File file=new File(dir,fn);
+                                                    fileUnitDef.Save(dir, fn, stream.toByteArray());
+                                                    base64Str = Base64FileUtil.encodeBase64File(file.getPath());
+                                                    picPath+=fn;
+                                                } else {
+                                                    picPath = BaseActivity.Screenshot();
+                                                    base64Str = Base64FileUtil.encodeBase64File(picPath);
+
+                                                }
                                                 JSONObject uploadObject=new JSONObject();
                                                 uploadObject.put("device_id",deviceData.getId());
                                                 uploadObject.put("fileFormat",".jpg");
@@ -215,28 +236,6 @@ public class CmdManager {
                                                     LogHelper.Error("截屏失败：" + picPath);
                                                 }
                                                 LogHelper.Debug("截屏完成：" + picPath);
-                                                /*LogHelper.Debug("截屏开始");
-                                                Bitmap bmp = BaseActivity.Screenshot();
-                                                ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                                                bmp.compress(Bitmap.CompressFormat.JPEG, 80, stream);
-                                                SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
-                                                String fn = formatter.format(new Date()) + ".jpg";
-                                                //String dir = Environment.getExternalStorageDirectory() + "/nf";
-                                                File fileSave = context.getExternalFilesDir("nf");
-                                                String dir=fileSave.getPath();
-                                                File file=new File(dir,fn);
-                                                fileUnitDef.Save(dir, fn, stream.toByteArray());
-                                                String base64Str = Base64FileUtil.encodeBase64File(file.getPath());
-                                                JSONObject uploadObject=new JSONObject();
-                                                uploadObject.put("device_id",deviceData.getId());
-                                                uploadObject.put("fileFormat",".jpg");
-                                                uploadObject.put("base64Str",base64Str);
-                                                String res = HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/uploadFile",uploadObject.toString());
-                                                JSONObject resObj= new JSONObject(res);
-                                                if(!resObj.getBoolean("success")) {
-                                                    LogHelper.Error("截屏失败：" + dir + "/" + fn);
-                                                }
-                                                LogHelper.Debug("截屏完成：" + dir + "/" + fn);*/
                                                 break;
                                             case "1006":
                                                 Paras.volume = contentObject.getInt("volume");
@@ -257,7 +256,7 @@ public class CmdManager {
                                                     String url=Paras.mulAPIAddr.substring(0,endIndex);
                                                     JSONObject finalContentObject = contentObject;
                                                     String dir1 = context.getExternalFilesDir("nf").getPath();
-                                                    deleteFile(dir1);
+                                                    deleteFile(dir1,"apk");
                                                     HttpUnitFactory.Get().DownLoad(url+contentObject.getString("filePath"), context.getExternalFilesDir("nf").getPath(), contentObject.getString("fileName"), new Action<Long>() {
                                                         @Override
                                                         public void Excute(Long value) {
@@ -347,6 +346,7 @@ public class CmdManager {
                                                     LogHelper.Error("日志提取失败：" + LogHelper.logFilePath);
                                                 }
                                                 LogHelper.Debug("日志提取完成：" + LogHelper.logFilePath);
+                                                DeleteFileDate();
                                                 break;
                                             case "1013":
                                                 //String voiceTxt = contentObject.getString("VoiceData");
@@ -358,10 +358,12 @@ public class CmdManager {
                                             case "1014":
                                                 String templateCode=contentObject.getString("templateCode");
                                                 Long voiceVolume=contentObject.getLong("voiceVolume");
-                                                String voiceDate=contentObject.getString("voiceDate");
+                                                String voiceDate=contentObject.getString("voiceData");
                                                 Long voiceSpeed=contentObject.getLong("voiceSpeed");
+                                                Paras.msgManager.SendMsg("开始呼叫：" + voiceDate);
                                                 Paras.volume= Math.toIntExact(voiceVolume);
-                                                textSpeaker2.setSpeed(voiceSpeed);
+                                                //textSpeaker2.setSpeed(voiceSpeed);
+                                                textSpeaker2.read(voiceDate);
                                                 break;
                                             case "1033":
                                                 File logFile=new File(LogHelper.logFilePath);
@@ -475,7 +477,7 @@ public class CmdManager {
 
         //默认30分钟截屏一次
 
-        /*Thread shutThread=new Thread(new Runnable() {
+        Thread shutThread=new Thread(new Runnable() {
             @Override
             public void run() {
                 new Thread(new Runnable() {
@@ -483,36 +485,41 @@ public class CmdManager {
                     public void run() {
                         try {
                             Thread.sleep(5000);
+                            SPUnit spUnit = new SPUnit(Paras.appContext);
+                            DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
                             LogHelper.Debug("截屏开始");
-                            Bitmap bmp = BaseActivity.Screenshot();
-                            ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                            bmp.compress(Bitmap.CompressFormat.JPEG, 80, stream);
-                            SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
-                            String fn = formatter.format(new Date()) + ".jpg";
-                            File fileSave = Paras.appContext.getExternalFilesDir("nf");
-                            String dir = fileSave.getPath();
-                            File file = new File(dir, fn);
-                            fileUnitDef.Save(dir, fn, stream.toByteArray());
-                            String base64Str = Base64FileUtil.encodeBase64File(file.getPath());
-                            JSONObject uploadObject = new JSONObject();
-                            uploadObject.put("device_id", deviceData.getId());
-                            uploadObject.put("fileFormat", ".jpg");
-                            uploadObject.put("base64Str", base64Str);
-                            String res="";
-                            try {
-                                res = HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/uploadFile", uploadObject.toString());
-                            } catch (Exception e) {
-                                LogHelper.Error(e);
+                            String base64Str="";
+                            String picPath=Paras.appContext.getExternalFilesDir("nf").getPath();
+                            if("hk".equals(Paras.devType)) {
+                                deleteFile(picPath,"jpg");
+                                View dView = BaseActivity.currActivity.getWindow().getDecorView();
+                                Bitmap bmp= InfoDisplayApi.screenShot(dView.getHeight(),dView.getWidth());
+                                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                                bmp.compress(Bitmap.CompressFormat.JPEG, 80, stream);
+                                SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+                                String fn = formatter.format(new Date()) + ".jpg";
+                                File fileSave = Paras.appContext.getExternalFilesDir("nf");
+                                String dir=fileSave.getPath();
+                                File file=new File(dir,fn);
+                                fileUnitDef.Save(dir, fn, stream.toByteArray());
+                                base64Str = Base64FileUtil.encodeBase64File(file.getPath());
+                                picPath+=fn;
+                            } else {
+                                picPath = BaseActivity.Screenshot();
+                                base64Str = Base64FileUtil.encodeBase64File(picPath);
                             }
-                            if(!Objects.equals(res, "")) {
-                                JSONObject resObj = new JSONObject(res);
-                                if (!resObj.getBoolean("success")) {
-                                    LogHelper.Error("截屏失败：" + dir + "/" + fn);
-                                }
-                                LogHelper.Debug("截屏完成：" + dir + "/" + fn);
+                            JSONObject uploadObject=new JSONObject();
+                            uploadObject.put("device_id",deviceData.getId());
+                            uploadObject.put("fileFormat",".jpg");
+                            uploadObject.put("base64Str",base64Str);
+                            String res = HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/uploadFile",uploadObject.toString());
+                            JSONObject resObj= new JSONObject(res);
+                            if(!resObj.getBoolean("success")) {
+                                LogHelper.Error("截屏失败：" + picPath);
                             }
+                            LogHelper.Debug("截屏完成：" + picPath);
                         } catch (Exception e) {
-                            LogHelper.Error(e);
+                            LogHelper.Error("截屏失败："+e.getMessage());
                         }
                     }
                 }).start();
@@ -521,9 +528,9 @@ public class CmdManager {
         if(!Paras.hasRun[2]) {
             pollingUtil.startPolling(shutThread,1800000,true);
             Paras.hasRun[2]=true;
-        }*/
+        }
     }
-    public static void deleteFile(String path) {
+    public static void deleteFile(String path,String type) {
         File file = new File(path);
         // 获取当前目录下的目录和文件
         File[] listFiles = file.listFiles();
@@ -532,13 +539,38 @@ public class CmdManager {
             if (f.isDirectory()) {
                 //是目录，进入目录继续删除
                 String path2 = f.getPath();
-                deleteFile(path2);
+                deleteFile(path2,"");
             }else {
                 //符合文件类型 调用delete()方法删除
                 String fileType = f.getName().substring(f.getName().lastIndexOf(".")+1);
-                if(fileType.equals("apk")){
+                if(fileType.equals(type)){
                     LogHelper.Debug("删除文件：" + f.getAbsolutePath());
                     f.delete();
+                }
+            }
+        }
+    }
+    //删除7天以上的日志文件
+    public void DeleteFileDate() {
+        String logFilePath = Paras.appContext.getExternalFilesDir(null)
+                + File.separator + "nf" + File.separator + "logs"
+                + File.separator;
+        File dirPath = new File(logFilePath);
+        if (dirPath.exists()) { //文件或文件夹是否存在
+            if (dirPath.isDirectory()) { //判断是不是目录
+                //得到文件里面全部的文件及文件夹
+                File[] files = dirPath.listFiles();
+                assert files != null;
+                for (File f : files) {
+                    //得到绝对路径下的文件及文件夹
+                    File absFile = f.getAbsoluteFile();
+                    long currTime = System.currentTimeMillis(); //当前时间
+                    long lastTime = absFile.lastModified(); //文件被最后一次修改的时间
+                    long diffen = currTime - lastTime;
+                    if (diffen > 7 * 24 * 60 * 60 * 1000) { // 删除大于7天的文件
+                        LogHelper.Debug("删除日志" + absFile.getName());
+                        absFile.delete();
+                    }
                 }
             }
         }

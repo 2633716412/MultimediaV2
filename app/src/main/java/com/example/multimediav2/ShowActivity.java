@@ -1,6 +1,7 @@
 package com.example.multimediav2;
 
 import android.annotation.SuppressLint;
+import android.app.ActionBar;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -13,7 +14,6 @@ import android.widget.Button;
 import androidx.annotation.RequiresApi;
 
 import com.example.multimediav2.HttpUnit.HttpUnitFactory;
-import com.example.multimediav2.Utils.Base64FileUtil;
 import com.example.multimediav2.Utils.DateUtil;
 
 import org.json.JSONArray;
@@ -46,6 +46,13 @@ public class ShowActivity extends BaseActivity {
         btn=findViewById(R.id.back);
         btn.getBackground().setAlpha(0);
         Paras.appContext=this;
+        // 隐藏状态栏
+        View decorView = getWindow().getDecorView();
+        int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN;
+        decorView.setSystemUiVisibility(uiOptions);
+        //隐藏状态栏时也可以把ActionBar也隐藏掉
+        ActionBar actionBar = getActionBar();
+
         SPUnit spUnit = new SPUnit(ShowActivity.this);
         DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
         webView1=findViewById(R.id.webView1);
@@ -76,12 +83,12 @@ public class ShowActivity extends BaseActivity {
         Thread playThread=new Thread(new Runnable() {
             @Override
             public void run() {
-                if(deviceData.getId()>0) {
-                    GetProgramData(deviceData.getId());
+                if(!Objects.equals(deviceData.getSn(), "")) {
+                    GetProgramData(deviceData.getSn());
                     while (true) {
                         Date nowTime=new Date();
                         if(Paras.updateProgram) {
-                            endTime=GetProgramData(deviceData.getId());
+                            endTime=GetProgramData(deviceData.getSn());
                             Paras.updateProgram=false;
                             try {
                                 Thread.currentThread();
@@ -130,12 +137,12 @@ public class ShowActivity extends BaseActivity {
         //截屏，默认隔30分钟截屏一次
     }
 
-    public Date GetProgramData(Long id) {
+    public Date GetProgramData(String sn) {
         Date date=new Date();
         try {
             String jsonStr="";
             try {
-                jsonStr = HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getProgramData?device_id=" + id);
+                jsonStr = HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getProgramData?sn=" + sn);
             } catch (Exception e) {
                 LogHelper.Error("获取节目异常："+e);
             }
@@ -203,32 +210,6 @@ public class ShowActivity extends BaseActivity {
     @Override
     public void onResume() {
         super.onResume();
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(5000);
-                    SPUnit spUnit = new SPUnit(Paras.appContext);
-                    DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
-                    LogHelper.Debug("截屏开始");
-                    String picPath = BaseActivity.Screenshot();
-                    String base64Str = Base64FileUtil.encodeBase64File(picPath);
-                    JSONObject uploadObject=new JSONObject();
-                    uploadObject.put("device_id",deviceData.getId());
-                    uploadObject.put("fileFormat",".jpg");
-                    uploadObject.put("base64Str",base64Str);
-                    String res = HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/uploadFile",uploadObject.toString());
-                    JSONObject resObj= new JSONObject(res);
-                    if(!resObj.getBoolean("success")) {
-                        LogHelper.Error("截屏失败：" + picPath);
-                    }
-                    LogHelper.Debug("截屏完成：" + picPath);
-                } catch (Exception e) {
-                    LogHelper.Error("截屏失败："+e.getMessage());
-                }
-            }
-        }).start();
 
     }
 

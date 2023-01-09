@@ -5,11 +5,7 @@ import Modules.Paras;
 public class PowerManagerFactory {
 
     public static IPowerManager Get() {
-        if (Paras.DEVA40.equals(Paras.devType)) {
-            return new PowerManagerA2040(Paras.appContext);
-        } else if (Paras.DEVA20.equals(Paras.devType)) {
-            return new PowerManagerA2040(Paras.appContext);
-        } else if (Paras.DEVA40_XiPin.equals(Paras.devType)) {
+        if (Paras.DEVA40_XiPin.equals(Paras.devType)) {
             return new PowerManagerA2040_XiPin(Paras.appContext);
         } else if (Paras.DEVA20_XiPin.equals(Paras.devType)) {
             return new PowerManagerA20_XiPin(Paras.appContext);

@@ -11,7 +11,7 @@ public class Paras {
 
     //<editor-fold desc="常量">
     public static Handler handler;
-    public static final int heart_time=3;
+    public static final int heart_time=1;
     public static final int time_start_listen_power = 60;
 
     public static final int time_loop_power = 60;

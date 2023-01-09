@@ -26,6 +26,7 @@ import androidx.annotation.RequiresApi;
 import com.example.multimediav2.HttpUnit.HttpUnitFactory;
 import com.example.multimediav2.Models.CmdManager;
 import com.example.multimediav2.Models.DropData;
+import com.example.multimediav2.Models.MyAdapter;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -82,10 +83,6 @@ public class MainActivity extends BaseActivity implements IMsgManager {
         List<DropData> dropList=new ArrayList<DropData>();
         DropData dev0=new DropData("test","TEST");
         dropList.add(dev0);
-        DropData dev1=new DropData("a20","DEVA20");
-        dropList.add(dev1);
-        DropData dev2=new DropData("a40","DEVA40");
-        dropList.add(dev2);
         DropData dev3=new DropData("a20xp","DEVA20_XiPin");
         dropList.add(dev3);
         DropData dev4=new DropData("a40xp","DEVA40_XiPin");
@@ -95,7 +92,7 @@ public class MainActivity extends BaseActivity implements IMsgManager {
         ArrayAdapter<DropData> adapter = new ArrayAdapter<DropData>(MainActivity.this, android.R.layout.simple_spinner_item, dropList);
         device_type.setAdapter(adapter);
 
-        if(deviceData.getId()>0) {
+        if(!Objects.equals(deviceData.getSn(), "")) {
             device_name=findViewById(R.id.device_name);
             inter1=findViewById(R.id.inter1);
             inter2=findViewById(R.id.inter2);
@@ -129,6 +126,8 @@ public class MainActivity extends BaseActivity implements IMsgManager {
                 public void run() {
                     boolean isStopped=false;
                     while (!isStopped) {
+                        SPUnit spUnit = new SPUnit(MainActivity.this);
+                        DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
                         Paras.mulAPIAddr=GetApiUrl(Paras.mulAPIAddr,deviceData.getApi_ip(),deviceData.getApi_port());
                         String urlSuffix="";
                         if(!Objects.equals(deviceData.getApi_ip(), "")) {
@@ -186,6 +185,8 @@ public class MainActivity extends BaseActivity implements IMsgManager {
                 spUnit.Set("DeviceData",deviceData);
             }
             if (Paras.first) {
+                deviceData.setSn(getUniquePsuedoID());
+                spUnit.Set("DeviceData",deviceData);
                 CmdManager iIniHanlder = new CmdManager();
                 iIniHanlder.Init(MainActivity.this, null);
                 //startService(new Intent(this, AppService.class));
@@ -233,7 +234,7 @@ public class MainActivity extends BaseActivity implements IMsgManager {
                     data.setDevice_name(device_name.getText().toString());
                     data.setApi_ip(ipStr.toString());
                     data.setApi_port(port.getText().toString());
-
+                    spUnit.Set("DeviceData",data);
                     DropData deviceType=(DropData)device_type.getSelectedItem();
                     data.setDevice_type(deviceType.getCode());
 
@@ -242,6 +243,8 @@ public class MainActivity extends BaseActivity implements IMsgManager {
                         public void run() {
                             boolean isStopped=false;
                             while (!isStopped) {
+                                SPUnit spUnit = new SPUnit(MainActivity.this);
+                                DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
                                 Paras.mulAPIAddr=GetApiUrl(Paras.mulAPIAddr,deviceData.getApi_ip(),deviceData.getApi_port());
                                 String urlSuffix="";
                                 if(!Objects.equals(deviceData.getApi_ip(), "")) {
@@ -280,75 +283,84 @@ public class MainActivity extends BaseActivity implements IMsgManager {
         });
 
         //获取机构下拉
-        inter1=findViewById(R.id.inter1);
-        inter2=findViewById(R.id.inter2);
-        inter3=findViewById(R.id.inter3);
-        inter4=findViewById(R.id.inter4);
-        port=findViewById(R.id.port);
-        if(inter1.getText()!=null&&inter2.getText()!=null&&inter3.getText()!=null&&inter3.getText()!=null&&port.getText()!=null) {
-            StringBuilder ipStr=new StringBuilder(inter1.getText().toString());
-            ipStr.append(".");
-            ipStr.append(inter2.getText().toString());
-            ipStr.append(".");
-            ipStr.append(inter3.getText().toString());
-            ipStr.append(".");
-            ipStr.append(inter4.getText().toString());
-            String apiIp=ipStr.toString();
-            String apiPort=port.getText().toString();
-
+        if(!Objects.equals(Paras.mulAPIAddr, "http://ip:port/selfv2api")) {
             new Thread(new Runnable() {
                 @RequiresApi(api = Build.VERSION_CODES.N)
                 @Override
                 public void run() {
                     boolean isStopped=false;
                     while (!isStopped) {
-                        Paras.mulAPIAddr=GetApiUrl(Paras.mulAPIAddr,apiIp,apiPort);
                         try {
                             String result= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/orgList");
-                            if(!Objects.equals(result, "")) {
-                                JSONObject object = new JSONObject(result);
-                                JSONArray jsonArray = object.getJSONArray("data");
-                                ArrayList<DropData> list=new ArrayList<DropData>();
-                                for(int i=0;i<jsonArray.length();i++) {
-                                    DropData dropdata=new DropData();
-                                    JSONObject obj = jsonArray.getJSONObject(i);
-                                    dropdata.setId(obj.getLong("id"));
-                                    dropdata.setName(obj.getString("org_name"));
-                                    list.add(dropdata);
-                                }
-                                ArrayAdapter<DropData> adapter=new ArrayAdapter<DropData>(Paras.appContext, androidx.appcompat.R.layout.support_simple_spinner_dropdown_item,list);
-                                spinner.setAdapter(adapter);
-                                        /*spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                                            @Override
-                                            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-
-                                            }
-
-                                            @Override
-                                            public void onNothingSelected(AdapterView<?> parent) {
-
-                                            }
-                                        });*/
-                                if(deviceData.getOrgId()>0) {
-                                    DropData d=  list.stream().filter(p-> Objects.equals(p.getId(), deviceData.getOrgId())).collect(Collectors.toList()).get(0);
-                                    spinner.setSelection(list.indexOf(d));
-                                }
-
-                                spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                                    @Override
-                                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                                        DropData data= (DropData) spinner.getSelectedItem();
-                                        deviceData.setOrgId(data.getId());
+                            String orgRes=HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getOrg"+"?sn="+deviceData.getSn());
+                            if(!Objects.equals(orgRes, "")) {
+                                JSONObject orgObj = new JSONObject(orgRes);
+                                boolean orgSuc=orgObj.getBoolean("success");
+                                if(orgSuc) {
+                                    long orgId=orgObj.getLong("data");
+                                    if(orgId>0) {
+                                        SPUnit spUnit = new SPUnit(MainActivity.this);
+                                        DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
+                                        deviceData.setOrgId(orgId);
                                         spUnit.Set("DeviceData",deviceData);
                                     }
+                                } else {
+                                    LogHelper.Error("获取设备机构失败："+orgObj.getString("msg"));
+                                }
 
-                                    @Override
-                                    public void onNothingSelected(AdapterView<?> parent) {
-
+                            }
+                            if(!Objects.equals(result, "")) {
+                                JSONObject object = new JSONObject(result);
+                                boolean suc=object.getBoolean("success");
+                                if(suc) {
+                                    JSONArray jsonArray = object.getJSONArray("data");
+                                    ArrayList<DropData> list=new ArrayList<DropData>();
+                                    for(int i=0;i<jsonArray.length();i++) {
+                                        DropData dropdata=new DropData();
+                                        JSONObject obj = jsonArray.getJSONObject(i);
+                                        dropdata.setId(obj.getLong("id"));
+                                        dropdata.setName(obj.getString("org_name"));
+                                        list.add(dropdata);
                                     }
-                                });
+                                    //ArrayAdapter<DropData> adapter=new ArrayAdapter<>(Paras.appContext, androidx.appcompat.R.layout.support_simple_spinner_dropdown_item,list);
+                                    MyAdapter myAdapter=new MyAdapter(list);
+                                    MainActivity.this.runOnUiThread(new Runnable() {
+                                        public void run() {
+                                            try {
+                                                SPUnit spUnit = new SPUnit(MainActivity.this);
+                                                DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
+                                                spinner.setAdapter(myAdapter);
+                                                spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                                                    @Override
+                                                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                                                        DropData data= (DropData) spinner.getSelectedItem();
+                                                        SPUnit spUnit = new SPUnit(MainActivity.this);
+                                                        DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
+                                                        deviceData.setOrgId(data.getId());
+                                                        spUnit.Set("DeviceData",deviceData);
+                                                    }
 
-                                isStopped=true;
+                                                    @Override
+                                                    public void onNothingSelected(AdapterView<?> parent) {
+
+                                                    }
+                                                });
+                                                if(deviceData.getOrgId()>0) {
+                                                    DropData d=  list.stream().filter(p-> Objects.equals(p.getId(), deviceData.getOrgId())).collect(Collectors.toList()).get(0);
+                                                    spinner.setSelection(list.indexOf(d));
+                                                }
+                                            } catch (Exception e) {
+                                                LogHelper.Error(e);
+                                            }
+
+                                        }
+                                    });
+
+                                    isStopped=true;
+                                } else {
+                                    LogHelper.Error("获取机构下拉失败："+object.getString("msg"));
+                                }
+
                             }
                         } catch (Exception e) {
                             LogHelper.Error("获取机构列表异常："+e);
@@ -371,6 +383,7 @@ public class MainActivity extends BaseActivity implements IMsgManager {
         });
 
     }
+
 
     private static String intToIp(int ip) {
         return (ip & 0xFF) + "." + ((ip >> 8) & 0xFF) + "." + ((ip >> 16) & 0xFF) + "." + (ip >> 24 & 0xFF);

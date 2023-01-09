@@ -16,9 +16,9 @@ public class DeviceData {
 
     public String device_ip = "";
 
-    public String api_ip="192.168.9.201";
+    public String api_ip="";
 
-    public String api_port="14084";
+    public String api_port="";
 
     public String mac="";
 
