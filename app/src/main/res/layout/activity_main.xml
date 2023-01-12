@@ -64,7 +64,7 @@
                 android:gravity="center_horizontal"
                 android:text="@string/device_ip"/>
             <EditText
-                android:inputType="number"
+                android:digits="1234567890.\n\r"
                 android:layout_width="50dp"
                 android:layout_height="48dp"
                 android:selectAllOnFocus="true"
@@ -75,7 +75,7 @@
                 android:id="@+id/inter1"/>
             <EditText
                 android:layout_marginLeft="10dp"
-                android:inputType="number"
+                android:digits="1234567890.\n\r"
                 android:layout_width="50dp"
                 android:layout_height="48dp"
                 android:selectAllOnFocus="true"
@@ -86,7 +86,7 @@
                 android:id="@+id/inter2"/>
             <EditText
                 android:layout_marginLeft="10dp"
-                android:inputType="number"
+                android:digits="1234567890.\n\r"
                 android:layout_width="50dp"
                 android:layout_height="48dp"
                 android:selectAllOnFocus="true"
@@ -102,7 +102,7 @@
                 android:layout_height="48dp"
                 android:layout_marginLeft="10dp"
                 android:background="@drawable/rounded_rectangle"
-                android:inputType="number"
+                android:digits="1234567890:\n\r"
                 android:maxLines="1"
                 android:paddingTop="5dp"
                 android:text=""
