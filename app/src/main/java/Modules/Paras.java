@@ -29,6 +29,9 @@ public class Paras {
     public static final String DEVA20_XiPin = "a20xp";
 
     public static final String DEVA40_XiPin = "a40xp";
+    public static final String HAI_KANG="hk";
+    public static final String HAI_KANG_6055="hk_6055";
+    public static final String HK_6055_REAL="hk_6055_real";
     //</editor-fold>
 
     //<editor-fold desc="全局参数">

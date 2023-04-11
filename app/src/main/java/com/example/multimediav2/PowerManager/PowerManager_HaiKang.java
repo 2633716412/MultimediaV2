@@ -1,9 +1,6 @@
 package com.example.multimediav2.PowerManager;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
 
 import com.example.multimediav2.HttpUnit.HttpUnitFactory;
 import com.hikvision.dmb.TimeSwitchConfig;
@@ -45,12 +42,12 @@ public class PowerManager_HaiKang implements IPowerManager {
 
     @Override
     public void Install(String path) {
-        Intent intent = Paras.appContext.getPackageManager().getLaunchIntentForPackage(Paras.appContext.getPackageName());
-        PendingIntent restartIntent = PendingIntent.getActivity(Paras.appContext, 0, intent, 0);
-        AlarmManager mgr = (AlarmManager) Paras.appContext.getSystemService(Context.ALARM_SERVICE);
-        mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 5 * 1000, restartIntent); // n秒后重启
         InfoUtilApi.silentInstallation(path);
+        //更新的时候启动应用
+        InfoUtilApi.startUp("com.example.multimediav2","com.example.multimediav2.MainActivity");
         System.exit(0);
+        /*InfoSystemApi.execCommand ("pm install -r "+path+" && am start com.example.multimediav2.MainActivity");
+        System.exit(0);*/
     }
 
     @Override

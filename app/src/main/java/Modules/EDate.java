@@ -190,4 +190,10 @@ public class EDate {
         return str;
     }
 
+    public String getTimeString() {
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm"); // 设置时间格式
+        String time = sdf.format(date); // 格式化日期
+        return time;
+    }
+
 }

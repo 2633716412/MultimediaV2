@@ -1,6 +1,7 @@
 package com.example.multimediav2;
 
 import android.app.Activity;
+import android.app.smdt.SmdtManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -115,6 +116,47 @@ public class BaseActivity extends Activity {
                 process.waitFor();
                 int ret = process.exitValue();
                 LogHelper.Debug(ret + "");
+                byte[] bytes=File2Bytes(file);
+                file.delete();
+                Bitmap bitmap= BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                Bitmap bitmap1=adjustPhotoRotation(bitmap,90);
+                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                bitmap1.compress(Bitmap.CompressFormat.JPEG, 80, stream);
+                fileUnitDef.Save(dir,fn,stream.toByteArray());
+                /*View dView = currActivity.getWindow().getDecorView();
+                dView.setDrawingCacheEnabled(true);
+                dView.destroyDrawingCache();
+                dView.buildDrawingCache();
+                bmp = dView.getDrawingCache();
+                bmp = Bitmap.createBitmap(dView.getWidth(), dView.getHeight(), Bitmap.Config.ARGB_8888);
+                Canvas canvas = new Canvas(bmp);
+                dView.draw(canvas);*/
+
+            }
+        } catch (Exception ex) {
+            LogHelper.Error(ex);
+        } finally {
+            return file.getPath();
+        }
+    }
+
+    public static String HK6055Screenshot() {
+        File file= Paras.appContext.getExternalFilesDir("nf");
+        String dir1 = file.getPath();
+        deleteFile(dir1,"jpg");
+        try {
+
+            if (currActivity != null) {
+                fileUnitDef = new FileUnitDef();
+                SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+                String fn = formatter.format(new Date()) + ".jpg";
+                //String dir = Environment.getExternalStorageDirectory() + "/nf";
+                File fileSave = Paras.appContext.getExternalFilesDir("nf");
+                String dir=fileSave.getPath();
+                file=new File(dir,fn);
+                SmdtManager smdt = SmdtManager.create(Paras.appContext);
+                smdt.execSuCmd("screencap -p " + file.getPath()+" \n");
+                smdt.execSuCmd("exit\n");
                 byte[] bytes=File2Bytes(file);
                 file.delete();
                 Bitmap bitmap= BitmapFactory.decodeByteArray(bytes, 0, bytes.length);

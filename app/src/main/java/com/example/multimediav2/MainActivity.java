@@ -89,14 +89,14 @@ public class MainActivity extends BaseActivity implements IMsgManager {
         port=findViewById(R.id.port);
         spinner=findViewById(R.id.spinner);
         List<DropData> dropList=new ArrayList<DropData>();
-        DropData dev0=new DropData("test","TEST");
-        dropList.add(dev0);
-        DropData dev3=new DropData("a20xp","DEVA20_XiPin");
-        dropList.add(dev3);
         DropData dev4=new DropData("a40xp","DEVA40_XiPin");
         dropList.add(dev4);
         DropData dev5=new DropData("hk","HAI_KANG");
         dropList.add(dev5);
+        DropData dev6=new DropData("hk_6055","HAI_KANG_6055");
+        dropList.add(dev6);
+        DropData dev7=new DropData("hk_6055_real","HK_6055_REAL");
+        dropList.add(dev7);
         ArrayAdapter<DropData> adapter = new ArrayAdapter<DropData>(MainActivity.this, android.R.layout.simple_spinner_item, dropList);
         device_type.setAdapter(adapter);
 
@@ -193,7 +193,7 @@ public class MainActivity extends BaseActivity implements IMsgManager {
                 spUnit.Set("DeviceData",deviceData);
             }
             if (Paras.first) {
-                deviceData.setSn(getUniquePsuedoID());
+                deviceData.setSn(getUniquePsuedoID()+deviceData.getDevice_ip());
                 spUnit.Set("DeviceData",deviceData);
                 CmdManager iIniHanlder = new CmdManager();
                 iIniHanlder.Init(MainActivity.this, null);
@@ -276,7 +276,7 @@ public class MainActivity extends BaseActivity implements IMsgManager {
                             }
                         }
                     }).start();
-                    data.setSn(getUniquePsuedoID());
+                    data.setSn(getUniquePsuedoID()+data.getDevice_ip());
                     spUnit.Set("DeviceData",data);
                     CmdManager iIniHanlder = new CmdManager();
                     iIniHanlder.Init(MainActivity.this, null);

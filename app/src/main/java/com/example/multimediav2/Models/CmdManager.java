@@ -221,10 +221,12 @@ public class CmdManager {
                                                     fileUnitDef.Save(dir, fn, stream.toByteArray());
                                                     base64Str = Base64FileUtil.encodeBase64File(file.getPath());
                                                     picPath+=fn;
+                                                } else if(Paras.devType.equals(Paras.HAI_KANG_6055)||Paras.devType.equals(Paras.HK_6055_REAL)) {
+                                                    picPath = BaseActivity.HK6055Screenshot();
+                                                    base64Str = Base64FileUtil.encodeBase64File(picPath);
                                                 } else {
                                                     picPath = BaseActivity.Screenshot();
                                                     base64Str = Base64FileUtil.encodeBase64File(picPath);
-
                                                 }
                                                 JSONObject uploadObject=new JSONObject();
                                                 uploadObject.put("device_id",deviceData.getId());
@@ -333,8 +335,11 @@ public class CmdManager {
                                                 StringBuilder sb = new StringBuilder("");
                                                 String line;
                                                 while ((line = reader.readLine()) != null) {
-                                                    sb.append(line);
-                                                    sb.append("\n");
+                                                    String lineStr=filterSpecialChars(line);
+                                                    sb.append(lineStr);
+                                                    if(!lineStr.equals("")) {
+                                                        sb.append("\n");
+                                                    }
                                                 }
                                                 String logContent=sb.toString();
                                                 JSONObject logObject=new JSONObject();
@@ -504,6 +509,9 @@ public class CmdManager {
                                 fileUnitDef.Save(dir, fn, stream.toByteArray());
                                 base64Str = Base64FileUtil.encodeBase64File(file.getPath());
                                 picPath+=fn;
+                            } else if(Paras.devType.equals(Paras.HAI_KANG_6055)||Paras.devType.equals(Paras.HK_6055_REAL)) {
+                                picPath = BaseActivity.HK6055Screenshot();
+                                base64Str = Base64FileUtil.encodeBase64File(picPath);
                             } else {
                                 picPath = BaseActivity.Screenshot();
                                 base64Str = Base64FileUtil.encodeBase64File(picPath);
@@ -585,5 +593,13 @@ public class CmdManager {
         }
         LogHelper.Debug("是否在白名单："+isIgnoring);
         return isIgnoring;
+    }
+
+    public static String filterSpecialChars(String str) {
+        if (str == null || str.trim().isEmpty()) {
+            return str;
+        }
+        String pattern = "[^a-zA-Z0-9\\u4E00-\\u9FA5\\s\\[\\]\\{\\}\\(\\),\\\"':./\\\\-]"; // 只允许字母、数字和中文
+        return str.replaceAll(pattern, "");
     }
 }
