@@ -95,8 +95,6 @@ public class MainActivity extends BaseActivity implements IMsgManager {
         dropList.add(dev5);
         DropData dev6=new DropData("hk_6055","HAI_KANG_6055");
         dropList.add(dev6);
-        DropData dev7=new DropData("hk_6055_real","HK_6055_REAL");
-        dropList.add(dev7);
         ArrayAdapter<DropData> adapter = new ArrayAdapter<DropData>(MainActivity.this, android.R.layout.simple_spinner_item, dropList);
         device_type.setAdapter(adapter);
 

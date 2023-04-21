@@ -31,7 +31,6 @@ public class Paras {
     public static final String DEVA40_XiPin = "a40xp";
     public static final String HAI_KANG="hk";
     public static final String HAI_KANG_6055="hk_6055";
-    public static final String HK_6055_REAL="hk_6055_real";
     //</editor-fold>
 
     //<editor-fold desc="全局参数">
@@ -67,10 +66,11 @@ public class Paras {
     public static boolean first = true;
     //判断是否刷新节目单
     public static boolean updateProgram = false;
-
-    public static boolean[] hasRun=new boolean[3];
+    //0命令线程 1定时开关机 2截屏 3海康喂狗
+    public static boolean[] hasRun=new boolean[4];
 
     public static int num=0;
+    public static int lis_num=0;
     //</editor-fold>
 
 }

@@ -8,18 +8,11 @@ import android.os.Build;
 
 import androidx.core.content.FileProvider;
 
-import com.example.multimediav2.HttpUnit.HttpUnitFactory;
-
-import org.json.JSONObject;
+import com.example.multimediav2.Utils.PollingUtil;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 import Modules.EDate;
 import Modules.LogHelper;
@@ -34,15 +27,27 @@ public class PowerManager_HK6055 implements IPowerManager{
 
     public PowerManager_HK6055(Context context) {
         this.context = context;
-        smdtManager = SmdtManager.create(context);
         //使用 API
+        smdtManager = SmdtManager.create(context);
+        //看门狗
         smdtManager.smdtWatchDogEnable((char) 1);
+        Thread dogThread=new Thread(new Runnable() {
+            @Override
+            public void run() {
+                smdtManager.smdtWatchDogFeed ();
+            }
+        });
+        if(!Paras.hasRun[3]) {
+            PollingUtil pollingUtil=new PollingUtil(Paras.handler);
+            pollingUtil.startPolling(dogThread,1500,true);
+            Paras.hasRun[3]=true;
+        }
         //打开usb调试模式
-        smdtManager.setUSBDebug(true);
+        //smdtManager.setUSBDebug(true);
         //打开adb调试模式
-        smdtManager. setNetworkDebug (true);
+        //smdtManager. setNetworkDebug (true);
         //设置安装应用白名单，在禁止安装时白名单 APP 依旧可以安装
-        smdtManager.getNtpServer();
+        //smdtManager.getNtpServer();
         osTimes = new ArrayList<>();
         for (int i = 1; i <= 7; i++) {
             osTimes.add(new OSTime(i, 0, 0, 23, 59));
@@ -74,7 +79,6 @@ public class PowerManager_HK6055 implements IPowerManager{
     @Override
     public void SetTime(List<OSTime> osTimes) {
         this.osTimes = osTimes;
-        if(Paras.devType.equals(Paras.HK_6055_REAL)) {
             EDate now = EDate.Now();
             OSTime osTime = null;
 
@@ -104,31 +108,35 @@ public class PowerManager_HK6055 implements IPowerManager{
             String msg = "设置 关机时间：" + end.ToString() + "，开机时间：" + begin.ToString();
             LogHelper.Debug(msg);
             Paras.msgManager.SendMsg(msg);
-            smdtManager.smdtSetPowerOnOff((char)0,(char)0,(char)0,(char)10,(char)3);
-            smdtManager.smdtSetTimingSwitchMachine(end.getTimeString(),begin.getTimeString(),"1");
-        }
+            //smdtManager.smdtSetTimingSwitchMachine ("20:30", "20:35","1");
+            /*smdtManager.smdtSetPowerOnOff((char)0,(char)0,(char)0,(char)10,(char)3);
+            smdtManager.smdtSetTimingSwitchMachine(end.getTimeString(),begin.getTimeString(),"1");*/
     }
+
 
     @Override
     public void ShutDown() {
         //息屏
+        LogHelper.Debug("准备关机...");
         smdtManager.smdtSetLcdBackLight(0);
     }
 
     @Override
     public void Open() {
         //亮屏
+        LogHelper.Debug("准备开机...");
         smdtManager.smdtSetLcdBackLight(1);
     }
 
     @Override
     public void Reboot() {
-        smdtManager.smdtReboot();
+
+        smdtManager.smdtReboot("reboot");
     }
 
     @Override
     public void setSystemTime(Context context) {
-        try {
+        /*try {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -158,28 +166,13 @@ public class PowerManager_HK6055 implements IPowerManager{
 
         } catch (Exception err) {
             LogHelper.Debug("系统时间被修改异常=" + err.toString());
-        }
+        }*/
     }
 
     @Override
     public void StartListen() {
-        if(!Paras.devType.equals(Paras.HK_6055_REAL)) {
-            ListenThread listenThread = new ListenThread();
-            boolean hasListenThread=false;
-            Map<Thread, StackTraceElement[]> map = Thread.currentThread().getAllStackTraces();
-            if (map != null && map.size() != 0) {
-                Iterator keyIterator = map.keySet().iterator();
-                while (keyIterator.hasNext()) {
-                    Thread eachThread = (Thread) keyIterator.next();
-                    if(Objects.equals(eachThread.getName(), listenThread.getName())) {
-                        hasListenThread=true;
-                    }
-                }
-            }
-            if(!hasListenThread) {
-                listenThread.start();
-            }
-        }
+        ListenThread listenThread = new ListenThread();
+        listenThread.start();
     }
 
     @Override
@@ -211,7 +204,7 @@ public class PowerManager_HK6055 implements IPowerManager{
 
                 try {
                     Thread.sleep(SLEPP);
-                    LogHelper.Debug("开关机服务监听中...");
+                    //LogHelper.Debug("开关机服务监听中...");
                 } catch (Exception ex) {
                 }
             }
@@ -279,20 +272,62 @@ public class PowerManager_HK6055 implements IPowerManager{
             EDate hh24 = new EDate(now.date.getYear(), now.date.getMonth(), now.date.getDate(), 23, 59, 59);
 
             if ((me >= hh00.date.getTime() && me <= e) || (me >= b && me <= hh24.date.getTime())) {
-                LogHelper.Debug("当前时间:" + now.ToString() + " 在范围：" + begin.ToString() + " 至 " + end.ToString());
+                if (Paras.lis_num==0) {
+                    Paras.lis_num++;
+                    int status = smdtManager.smdtGetLcdLightStatus();
+                    LogHelper.Debug("当前屏幕状态："+status);
+                    LogHelper.Debug("当前时间:" + now.ToString() + " 在范围：" + begin.ToString() + " 至 " + end.ToString());
+                } else {
+                    Paras.lis_num++;
+                    if(Paras.lis_num>=5) {
+                        Paras.lis_num=0;
+                    }
+                }
                 return false;
             } else {
-                LogHelper.Debug("当前时间:" + now.ToString() + " 不在范围：" + begin.ToString() + " 至 " + end.ToString());
+                if (Paras.lis_num==0) {
+                    Paras.lis_num++;
+                    int status = smdtManager.smdtGetLcdLightStatus();
+                    LogHelper.Debug("当前屏幕状态："+status);
+                    LogHelper.Debug("当前时间:" + now.ToString() + " 不在范围：" + begin.ToString() + " 至 " + end.ToString());
+                } else {
+                    Paras.lis_num++;
+                    if(Paras.lis_num>=5) {
+                        Paras.lis_num=0;
+                    }
+                }
+
                 return true;
             }
         }
 
         //开始时间<结束时间时，不在这个范围内就关机
         if (!now.Between(begin, end)) {
-            LogHelper.Debug("当前时间:" + now.ToString() + " 不在范围：" + begin.ToString() + " 至 " + end.ToString());
+            if (Paras.lis_num==0) {
+                Paras.lis_num++;
+                int status = smdtManager.smdtGetLcdLightStatus();
+                LogHelper.Debug("当前屏幕状态："+status);
+                LogHelper.Debug("当前时间:" + now.ToString() + " 不在范围：" + begin.ToString() + " 至 " + end.ToString());
+
+            } else {
+                Paras.lis_num++;
+                if(Paras.lis_num>=5) {
+                    Paras.lis_num=0;
+                }
+            }
             return true;
         }
-        LogHelper.Debug("当前时间:" + now.ToString() + " 在范围：" + begin.ToString() + " 至 " + end.ToString());
+        if (Paras.lis_num==0) {
+            Paras.lis_num++;
+            int status = smdtManager.smdtGetLcdLightStatus();
+            LogHelper.Debug("当前屏幕状态："+status);
+            LogHelper.Debug("当前时间:" + now.ToString() + " 在范围：" + begin.ToString() + " 至 " + end.ToString());
+        } else {
+            Paras.lis_num++;
+            if(Paras.lis_num>=5) {
+                Paras.lis_num=0;
+            }
+        }
         return false;
     }
 }

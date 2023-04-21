@@ -165,7 +165,9 @@ public class CmdManager {
                                         if (Paras.num==0) {
                                             LogHelper.Debug("更新心跳时间成功");
                                             Paras.num++;
-                                            if(Paras.num>=5) {
+                                        } else {
+                                            Paras.num++;
+                                            if(Paras.num>=60) {
                                                 Paras.num=0;
                                             }
                                         }
@@ -221,7 +223,7 @@ public class CmdManager {
                                                     fileUnitDef.Save(dir, fn, stream.toByteArray());
                                                     base64Str = Base64FileUtil.encodeBase64File(file.getPath());
                                                     picPath+=fn;
-                                                } else if(Paras.devType.equals(Paras.HAI_KANG_6055)||Paras.devType.equals(Paras.HK_6055_REAL)) {
+                                                } else if(Paras.devType.equals(Paras.HAI_KANG_6055)) {
                                                     picPath = BaseActivity.HK6055Screenshot();
                                                     base64Str = Base64FileUtil.encodeBase64File(picPath);
                                                 } else {
@@ -365,7 +367,8 @@ public class CmdManager {
                                                 Long voiceVolume=contentObject.getLong("voiceVolume");
                                                 String voiceDate=contentObject.getString("voiceData");
                                                 Long voiceSpeed=contentObject.getLong("voiceSpeed");
-                                                Paras.msgManager.SendMsg("开始呼叫：" + voiceDate);
+                                                //Paras.msgManager.SendMsg("开始呼叫：" + voiceDate);
+                                                LogHelper.Debug("开始呼叫：" + voiceDate);
                                                 Paras.volume= Math.toIntExact(voiceVolume);
                                                 //textSpeaker2.setSpeed(voiceSpeed);
                                                 textSpeaker2.read(voiceDate);
@@ -400,11 +403,11 @@ public class CmdManager {
             pollingUtil.startPolling(task,Paras.heart_time*1000,true);
             Paras.hasRun[0]=true;
         }
-        /*MyThread myThread=new MyThread();
+        MyThread myThread=new MyThread();
         if(!Paras.hasRun[0]) {
             pollingUtil.startPolling(myThread,Paras.heart_time*1000,true);
             Paras.hasRun[0]=true;
-        }*/
+        }
         //定时开关机监测
         Thread listenThread=new Thread(new Runnable() {
             @Override
@@ -509,7 +512,7 @@ public class CmdManager {
                                 fileUnitDef.Save(dir, fn, stream.toByteArray());
                                 base64Str = Base64FileUtil.encodeBase64File(file.getPath());
                                 picPath+=fn;
-                            } else if(Paras.devType.equals(Paras.HAI_KANG_6055)||Paras.devType.equals(Paras.HK_6055_REAL)) {
+                            } else if(Paras.devType.equals(Paras.HAI_KANG_6055)) {
                                 picPath = BaseActivity.HK6055Screenshot();
                                 base64Str = Base64FileUtil.encodeBase64File(picPath);
                             } else {
