@@ -8,6 +8,7 @@ import android.widget.Toast;
 import Modules.LogHelper;
 
 public class MyBroadcastReceiver extends DeviceAdminReceiver {
+    private static final int REQUEST_CODE_ENABLE_ADMIN = 1;
     /*@Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
@@ -36,4 +37,5 @@ public class MyBroadcastReceiver extends DeviceAdminReceiver {
                 "设备管理器没有使能");
         LogHelper.Debug("设备管理器没有使能");
     }
+
 }

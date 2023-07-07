@@ -42,12 +42,12 @@ public class PowerManager_HaiKang implements IPowerManager {
 
     @Override
     public void Install(String path) {
-        InfoUtilApi.silentInstallation(path);
         //更新的时候启动应用
-        InfoUtilApi.startUp("com.example.multimediav2","com.example.multimediav2.MainActivity");
-        System.exit(0);
-        /*InfoSystemApi.execCommand ("pm install -r "+path+" && am start com.example.multimediav2.MainActivity");
-        System.exit(0);*/
+        //InfoUtilApi.startUp("com.example.multimediav2","com.example.multimediav2.MainActivity");
+        InfoUtilApi.enableProtection("com.example.multimediav2",true);
+        InfoUtilApi.silentInstallation(path);
+        //InfoSystemApi.execCommand ("pm install -r "+path+" && am start com.example.multimediav2.MainActivity");
+        //System.exit(0);
     }
 
     @Override

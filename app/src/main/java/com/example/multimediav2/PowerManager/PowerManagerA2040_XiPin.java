@@ -12,13 +12,10 @@ import android.os.Build;
 import android.os.PowerManager;
 import android.view.View;
 
-import androidx.annotation.RequiresApi;
 import androidx.core.content.FileProvider;
 
 import com.example.multimediav2.BaseActivity;
-import com.example.multimediav2.Models.MyBroadcastReceiver;
 
-import java.io.DataOutputStream;
 import java.io.File;
 import java.util.Calendar;
 
@@ -57,22 +54,14 @@ public class PowerManagerA2040_XiPin extends BasePowerManager{
             LogHelper.Error(ex);
         }
     }*/
-    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public void ShutDown() {
-
-        try {
-            adminReceiver= new ComponentName(Paras.appContext, MyBroadcastReceiver.class);
-            mPowerManager=(PowerManager) Paras.appContext.getSystemService(POWER_SERVICE);
-            policyManager=(DevicePolicyManager) Paras.appContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
-            checkAndTurnOnDeviceManager(null);
-            checkScreenOff(null);
-        } catch (Exception ex) {
-            LogHelper.Error(ex);
-        }
+        Intent intent = new Intent("com.zc.zclcdoff");
+        context.sendBroadcast(intent);
+        Paras.volume=0;
     }
 
-    @Override
+    /*@Override
     public void Open() {
         try {
             Process p = Runtime.getRuntime().exec("su");
@@ -88,9 +77,16 @@ public class PowerManagerA2040_XiPin extends BasePowerManager{
             LogHelper.Error(ex);
         }
         //Reboot();
+    }*/
+    @Override
+    public void Open() {
+        Paras.volume=100;
+        Intent intent = new Intent("wits.action.reboot");
+        context.sendBroadcast(intent);
+
     }
 
-    @Override
+    /*@Override
     public void Reboot() {
         try {
             Process p = Runtime.getRuntime().exec("su");
@@ -105,8 +101,12 @@ public class PowerManagerA2040_XiPin extends BasePowerManager{
         } catch (Exception ex) {
             LogHelper.Error(ex);
         }
+    }*/
+    @Override
+    public void Reboot() {
+        Intent intent = new Intent("wits.action.reboot");
+        context.sendBroadcast(intent);
     }
-
     @Override
     public void Install(String path) {
         File file=new File(path);
@@ -183,8 +183,9 @@ public class PowerManagerA2040_XiPin extends BasePowerManager{
      */
     public void checkScreenOff(View view) {
         boolean admin = policyManager.isAdminActive(adminReceiver);
-        policyManager.lockNow();
         if (admin) {
+            PowerManager.WakeLock wakeLock = mPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyApp::MyWakelockTag");
+            wakeLock.acquire();
             policyManager.lockNow();
         } else {
             LogHelper.Debug("没有设备管理权限");

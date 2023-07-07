@@ -11,7 +11,7 @@ android {
         targetSdkVersion 33
         //targetSdk 28
         versionCode 1
-        versionName "2.0"
+        versionName "2.2"
 
         //testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -39,6 +39,7 @@ dependencies {
     implementation project(path: ':serialport')
     implementation files('libs/dmb.jar')
     implementation files('libs/smdt.jar')
+    implementation files('libs/zckjAPI-2.1.jar')
     implementation 'com.squareup.okhttp3:okhttp:3.12.0'
     implementation 'com.google.code.gson:gson:2.8.6'
     implementation 'com.danikula:videocache:2.7.1'

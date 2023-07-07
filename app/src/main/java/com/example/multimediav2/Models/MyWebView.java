@@ -22,4 +22,5 @@ public class MyWebView extends WebView {
         //禁止左右滚动：scrollTo(0,y),禁止上下滚动：scrollTo(x,0)
         scrollTo(0,0);
     }
+
 }

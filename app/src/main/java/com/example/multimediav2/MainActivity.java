@@ -2,6 +2,8 @@ package com.example.multimediav2;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -29,6 +31,7 @@ import com.example.multimediav2.HttpUnit.HttpUnitFactory;
 import com.example.multimediav2.Models.CmdManager;
 import com.example.multimediav2.Models.DropData;
 import com.example.multimediav2.Models.MyAdapter;
+import com.example.multimediav2.Models.MyBroadcastReceiver;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -64,6 +67,7 @@ public class MainActivity extends BaseActivity implements IMsgManager {
     private Button btu_save;
     private TextView switch_text;
     private Spinner spinner;
+
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,7 +93,9 @@ public class MainActivity extends BaseActivity implements IMsgManager {
         port=findViewById(R.id.port);
         spinner=findViewById(R.id.spinner);
         List<DropData> dropList=new ArrayList<DropData>();
-        DropData dev4=new DropData("a40xp","DEVA40_XiPin");
+        DropData dev3=new DropData("a40xp","DEVA40_XiPin");
+        dropList.add(dev3);
+        DropData dev4=new DropData("a40box","DEVA40_XiPinBox");
         dropList.add(dev4);
         DropData dev5=new DropData("hk","HAI_KANG");
         dropList.add(dev5);
@@ -243,7 +249,9 @@ public class MainActivity extends BaseActivity implements IMsgManager {
                     spUnit.Set("DeviceData",data);
                     DropData deviceType=(DropData)device_type.getSelectedItem();
                     data.setDevice_type(deviceType.getCode());
-
+                    if(data.getDevice_type().equals(Paras.DEVA20_XiPinBox)) {
+                        checkAndTurnOnDeviceManager(null);
+                    }
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
@@ -280,6 +288,7 @@ public class MainActivity extends BaseActivity implements IMsgManager {
                     iIniHanlder.Init(MainActivity.this, null);
                     Paras.msgManager.SendMsg("修改配置完成");
                     Paras.updateProgram=true;
+                    Paras.first=true;
                     SkipTo(ShowActivity.class);
                 } catch (Exception ex) {
                     LogHelper.Error(ex);
@@ -483,6 +492,17 @@ public class MainActivity extends BaseActivity implements IMsgManager {
 
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+    }
 
     private static String intToIp(int ip) {
         return (ip & 0xFF) + "." + ((ip >> 8) & 0xFF) + "." + ((ip >> 16) & 0xFF) + "." + (ip >> 24 & 0xFF);
@@ -625,5 +645,18 @@ public class MainActivity extends BaseActivity implements IMsgManager {
         }
 
         return new UUID(m_szDevIDShort.hashCode(), serial.hashCode()).toString();
+    }
+
+    /**
+     * @param view 检测并去激活设备管理器权限
+     */
+    public void checkAndTurnOnDeviceManager(View view) {
+        ComponentName adminReceiver= new ComponentName(Paras.appContext, MyBroadcastReceiver.class);;
+        Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
+        intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminReceiver);
+        intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "Enable USB blocking");
+        //intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "开启后就可以使用锁屏功能了...");//显示位置见图二
+        BaseActivity.currActivity.startActivityForResult(intent, 0);
+
     }
 }

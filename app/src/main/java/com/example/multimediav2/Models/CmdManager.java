@@ -23,6 +23,7 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
@@ -191,6 +192,10 @@ public class CmdManager {
                                     }
                                     if (!code.equals("")) {
                                         switch (code) {
+                                            case "1001":
+                                                LogHelper.Debug("下发节目");
+                                                Paras.updateProgram=true;
+                                                break;
                                             case "1002":
                                                 LogHelper.Debug("开始开机");
                                                 Paras.powerManager.Open();
@@ -372,6 +377,40 @@ public class CmdManager {
                                                 Paras.volume= Math.toIntExact(voiceVolume);
                                                 //textSpeaker2.setSpeed(voiceSpeed);
                                                 textSpeaker2.read(voiceDate);
+                                                break;
+                                            case "1015":
+                                                /*DevicePolicyManager devicePolicyManager = (DevicePolicyManager) Paras.appContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
+                                                ComponentName adminReceiver= new ComponentName(Paras.appContext, MyBroadcastReceiver.class);
+                                                boolean admin = devicePolicyManager.isAdminActive(adminReceiver);
+                                                if (devicePolicyManager != null && admin) {
+                                                    devicePolicyManager.addUserRestriction(adminReceiver, UserManager.DISALLOW_USB_FILE_TRANSFER);
+                                                }*/
+                                                /*Intent intentOff = new Intent("android.hardware.usb.action.USB_STATE");
+                                                intentOff.putExtra("connected", false);
+                                                BaseActivity.currActivity.sendBroadcast(intentOff);*/
+                                                Process p = Runtime.getRuntime().exec("su");
+                                                DataOutputStream localDataOutputStream = new DataOutputStream(p.getOutputStream());
+
+                                                localDataOutputStream.writeBytes("echo 0 > /sys/class/android_usb/android0/enable\n");
+                                                localDataOutputStream.writeBytes("exit\n");
+                                                localDataOutputStream.flush();
+                                                p.waitFor();
+                                                int ret = p.exitValue();
+                                                LogHelper.Debug(ret + "");
+                                                break;
+                                            case "1016":
+                                                /*Intent intentOn = new Intent("android.hardware.usb.action.USB_STATE");
+                                                intentOn.putExtra("connected", true);
+                                                BaseActivity.currActivity.sendBroadcast(intentOn);*/
+                                                Process p1 = Runtime.getRuntime().exec("su");
+                                                DataOutputStream localDataOutputStream1 = new DataOutputStream(p1.getOutputStream());
+
+                                                localDataOutputStream1.writeBytes("echo 1 > /sys/class/android_usb/android0/enable\n");
+                                                localDataOutputStream1.writeBytes("exit\n");
+                                                localDataOutputStream1.flush();
+                                                p1.waitFor();
+                                                int ret1 = p1.exitValue();
+                                                LogHelper.Debug(ret1 + "");
                                                 break;
                                             case "1033":
                                                 File logFile=new File(LogHelper.logFilePath);
@@ -605,4 +644,27 @@ public class CmdManager {
         String pattern = "[^a-zA-Z0-9\\u4E00-\\u9FA5\\s\\[\\]\\{\\}\\(\\),\\\"':./\\\\-]"; // 只允许字母、数字和中文
         return str.replaceAll(pattern, "");
     }
+
+    /*public class UsbSetting {
+        final private static String TAG = "UsbSetting";
+        public  void AllowUseUsb() {    //允许使用USB
+            Command.command("setprop persist.sys.usb.config mtp,adb");
+        }
+        public  void DisallowUseUsb() {   //禁止使用USB
+            Command.command("setprop persist.sys.usb.config none");
+        }
+    }
+
+    public static class Command {
+        final private static String TAG = "Command";
+        public static void command(String com) {
+            try {
+                Log.i(TAG, "Command : " + com);
+                Runtime.getRuntime().exec(com);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+    }*/
 }

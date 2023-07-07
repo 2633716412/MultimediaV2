@@ -22,11 +22,7 @@ public class Paras {
 
     public static final String DEVMR = "test";//mr
 
-    public static final String DEVA40 = "a40";
-
-    public static final String DEVA20 = "a20";
-
-    public static final String DEVA20_XiPin = "a20xp";
+    public static final String DEVA20_XiPinBox = "a40box";
 
     public static final String DEVA40_XiPin = "a40xp";
     public static final String HAI_KANG="hk";
