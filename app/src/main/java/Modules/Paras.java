@@ -65,8 +65,15 @@ public class Paras {
     //0命令线程 1定时开关机 2截屏 3海康喂狗
     public static boolean[] hasRun=new boolean[4];
 
-    public static int num=0;
+    public static int fail_num=0;
+
+    public static int success_num=0;
+
     public static int lis_num=0;
     //</editor-fold>
-
+    //上层节目url
+    public static String programUrl="";
+    //底层url
+    public static String underUrl="";
+    public static boolean refresh=false;
 }

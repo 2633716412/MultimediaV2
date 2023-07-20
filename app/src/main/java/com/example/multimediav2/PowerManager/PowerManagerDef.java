@@ -115,6 +115,12 @@ public class PowerManagerDef extends BasePowerManager {
         }
         Paras.appContext.startActivity(intent);
     }
+
+    @Override
+    public void StatusBar() {
+
+    }
+
     private PowerManager.WakeLock mWakeLock;
     synchronized private void getLock(Context context) {
         if (mWakeLock == null) {

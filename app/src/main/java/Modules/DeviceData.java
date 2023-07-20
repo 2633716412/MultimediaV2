@@ -24,6 +24,16 @@ public class DeviceData {
 
     public List<OSTime> osTimes = new ArrayList<>();
 
+    public int stream_type=-1;//叫号音频类型：-1媒体音频 0闹钟音频 1通知音频 2通话音频
+
+    public int getStream_type() {
+        return stream_type;
+    }
+
+    public void setStream_type(int stream_type) {
+        this.stream_type = stream_type;
+    }
+
     public List<OSTime> getOsTimes() {
         return osTimes;
     }

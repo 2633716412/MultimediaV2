@@ -1,6 +1,8 @@
 package Modules;
 
 import android.content.Context;
+import android.media.AudioAttributes;
+import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 
@@ -10,7 +12,10 @@ import java.util.Locale;
 public class TextSpeaker2 implements TextToSpeech.OnInitListener {
 
     TextToSpeech toSpeech;
+    AudioAttributes audioAttributes;
     private boolean speechOver = true;
+    SPUnit spUnit = new SPUnit(Paras.appContext);
+    DeviceData userData = spUnit.Get("DeviceData", DeviceData.class);
     public TextSpeaker2(Context context) {
         toSpeech = new TextToSpeech(context, TextSpeaker2.this);
         toSpeech.setOnUtteranceProgressListener(new UtteranceProgressListener() {
@@ -24,11 +29,6 @@ public class TextSpeaker2 implements TextToSpeech.OnInitListener {
             public void onDone(String s) {//完成之后
                 LogHelper.Debug("onDone完成播放");
                 speechOver = true;
-                //可循环播放
-                        /*if (i<3){
-                            toSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, params);
-                            i++;
-                        }*/
             }
             @Override
             public void onError(String s) {//播放错误的处理
@@ -86,7 +86,8 @@ public class TextSpeaker2 implements TextToSpeech.OnInitListener {
             }
             if (toSpeech != null) {
                 // 设置音调，值越大声音越尖（女生），值越小则变成男声,1.0是常规
-                toSpeech.setPitch(1.0f);
+                toSpeech.setPitch(2.0f);
+                setStreamType(userData.stream_type);
                 LogHelper.Debug("语音模块初始化成功！");
             }
         }
@@ -104,5 +105,43 @@ public class TextSpeaker2 implements TextToSpeech.OnInitListener {
     {
         float v = speed / 100f;
         toSpeech.setSpeechRate(v);
+    }
+
+    //叫号音频设置
+    public void setStreamType(int stream_type) {
+        if(stream_type==0) {//闹钟音频
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                audioAttributes = new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ALARM)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build();
+                toSpeech.setAudioAttributes(audioAttributes);
+            }
+        } else if(stream_type==1) {//通知音频
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                audioAttributes = new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_NOTIFICATION_EVENT)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build();
+                toSpeech.setAudioAttributes(audioAttributes);
+            }
+        } else if(stream_type==2) {//通话音频
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                audioAttributes = new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build();
+                toSpeech.setAudioAttributes(audioAttributes);
+            }
+        } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                audioAttributes=new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build();
+                toSpeech.setAudioAttributes(audioAttributes);
+            }
+        }
+
     }
 }

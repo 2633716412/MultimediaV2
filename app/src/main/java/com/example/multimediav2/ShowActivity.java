@@ -5,17 +5,13 @@ import android.app.ActionBar;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
-import android.webkit.SslErrorHandler;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -53,6 +49,7 @@ public class ShowActivity extends BaseActivity {
     public static KeepFocusThread keepFocusThread;
     private Thread programThread;
     private Intent mServiceIntent;
+    private PollingUtil pollingUtil=new PollingUtil(Paras.handler);
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -61,7 +58,7 @@ public class ShowActivity extends BaseActivity {
         setContentView(R.layout.activity_show);
         btn=findViewById(R.id.back);
         btn.getBackground().setAlpha(0);
-        Paras.appContext=this;
+        //Paras.appContext=this;
         TextView versionText=findViewById(R.id.versionText);
 
         // 隐藏状态栏
@@ -70,6 +67,8 @@ public class ShowActivity extends BaseActivity {
         decorView.setSystemUiVisibility(uiOptions);
         //隐藏状态栏时也可以把ActionBar也隐藏掉
         ActionBar actionBar = getActionBar();
+        Paras.powerManager.StatusBar();
+
         mServiceIntent = new Intent(this, MyService.class);
         SPUnit spUnit = new SPUnit(ShowActivity.this);
         DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
@@ -81,50 +80,16 @@ public class ShowActivity extends BaseActivity {
         // 设置允许JS弹窗
         webSetting1.setJavaScriptCanOpenWindowsAutomatically(true);
         webSetting1.setMediaPlaybackRequiresUserGesture(false);
+        webSetting1.setCacheMode(WebSettings.LOAD_NO_CACHE);
         webView1.setWebChromeClient(new WebChromeClient());
+
         //webView1.setBackgroundColor(0); // 设置背景色
         webView2=findViewById(R.id.webView2);
         webView2.setBackgroundColor(0); // 设置背景色
         WebSettings webSetting2=webView2.getSettings();
         webSetting2.setJavaScriptEnabled(true);
         //webView2.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-        webView2.setWebViewClient(new WebViewClient() {
-            // 解决H5的音视频不能自动播放的问题
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-                //view.loadUrl("javascript:palyVideo()");
-            }
-
-            /*@Override
-            public void onPageStarted(WebView view, String url,
-                                      Bitmap favicon) {
-
-                super.onPageStarted(view, url, favicon);
-            }*/
-            @Override
-            public void onPageStarted(final WebView view, String url, Bitmap favicon) {
-                super.onPageStarted(view, url, favicon);
-                //为了使webview加载完数据后resize高度，之所以不放在onPageFinished里，是因为onPageFinished不是每次加载完都会调用
-                int w = View.MeasureSpec.makeMeasureSpec(0,
-                        View.MeasureSpec.UNSPECIFIED);
-                int h = View.MeasureSpec.makeMeasureSpec(0,
-                        View.MeasureSpec.UNSPECIFIED);
-                //重新测量
-                view.measure(w, h);
-
-            }
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                view.loadUrl(url);
-                return false;
-            }
-
-            @Override
-            public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error){
-                handler.proceed();
-            }
-        });
+        //webView2.setWebViewClient(new WebViewClient());
         webView2.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onShowCustomView(View view, CustomViewCallback callback) {
@@ -134,16 +99,19 @@ public class ShowActivity extends BaseActivity {
         webSetting2.setJavaScriptCanOpenWindowsAutomatically(true);
         webSetting2.setLoadsImagesAutomatically(true);
         webSetting2.setDomStorageEnabled(true);
-        webSetting2.setAppCacheEnabled(true);
-        webSetting2.setCacheMode(WebSettings.LOAD_DEFAULT);
+        //缓存
+        /*webSetting2.setAppCacheEnabled(true);
+        webSetting2.setCacheMode(WebSettings.LOAD_DEFAULT);*/
+
         webSetting2.setDatabaseEnabled(true);
         webSetting2.setAllowContentAccess(true);
         webSetting2.setAllowFileAccess(true);
         webSetting2.setDefaultTextEncodingName("utf-8");
+        //webView2.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         webSetting2.setMediaPlaybackRequiresUserGesture(false);
         //webView2.getBackground().setAlpha(0); // 设置填充透明度 范围：0-255
         //webView2.loadUrl("http://192.168.9.201:14084/selfpc2/app/index.html?id=10024");
-        PollingUtil pollingUtil=new PollingUtil(Paras.handler);
+        //PollingUtil pollingUtil=new PollingUtil(Paras.handler);
         programThread=new Thread(new Runnable() {
             @Override
             public void run() {
@@ -157,7 +125,8 @@ public class ShowActivity extends BaseActivity {
                                 endTime=GetProgramData(deviceData.getSn());
                                 Paras.updateProgram=false;
                             }
-                            if(nowTime.getTime()>endTime.getTime()) {
+                            if(endTime.getTime()>0&&nowTime.getTime()>endTime.getTime()) {
+                                LogHelper.Debug("节目结束时间："+endTime);
                                 Paras.updateProgram=true;
                             }
                         }
@@ -165,12 +134,6 @@ public class ShowActivity extends BaseActivity {
                 }).start();
             }
         });
-        /*mRefreshRunnable=new Runnable(){
-            @Override
-            public void run() {
-
-            }
-        };*/
         pollingUtil.startPolling(programThread,5 * 1000,false);
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -262,7 +225,10 @@ public class ShowActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
         // 在 Activity 可见时开始执行刷新任务
-        Paras.handler.post(programThread);
+        Paras.underUrl="";
+        Paras.programUrl="";
+        pollingUtil.startPolling(programThread,5 * 1000,false);
+        //Paras.handler.post(programThread);
         stopService(mServiceIntent);
     }
 
@@ -270,22 +236,25 @@ public class ShowActivity extends BaseActivity {
     protected void onPause() {
         super.onPause();
         // 在 Activity 不可见时移除刷新任务，避免内存泄漏
-        Paras.handler.removeCallbacks(programThread);
+        Paras.underUrl="";
+        Paras.programUrl="";
+        pollingUtil.endPolling(programThread);
+        //Paras.handler.removeCallbacks(programThread);
         startService(mServiceIntent);
     }
 
     public Date GetProgramData(String sn) {
         Date date=new Date();
         try {
-            //boolean isStopped=false;
-            //while (!isStopped) {
+            boolean isStopped=false;
+            while (!isStopped) {
                 String jsonStr="";
                 try {
                     jsonStr = HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getProgramData?sn=" + sn);
-                    //isStopped=true;
+                    isStopped=true;
                 } catch (Exception e) {
                     LogHelper.Error("获取节目异常："+e);
-                    Paras.updateProgram=true;
+                    continue;
                 }
                 if(!Objects.equals(jsonStr, "")) {
                     JSONObject object = new JSONObject(jsonStr);
@@ -320,6 +289,10 @@ public class ShowActivity extends BaseActivity {
                                         start.set( Calendar.MINUTE, minutes);
                                         start.set( Calendar.SECOND,0);
                                         date=start.getTime();
+                                        if(url.toString().contains("http://ip:port/app/index.html"))
+                                        {
+                                            Paras.updateProgram=true;
+                                        }
                                         url.append("?id=").append(programId);
                                         if(underUrl!=null&& !underUrl.equals("")) {
                                             wvUrl.append(underUrl);
@@ -333,8 +306,20 @@ public class ShowActivity extends BaseActivity {
                         ShowActivity.this.runOnUiThread(new Runnable() {
                             public void run() {
                                 try {
-                                    webView2.loadUrl(url.toString());
+                                    if(!url.toString().equals(Paras.programUrl)||!wvUrl.toString().equals(Paras.underUrl)) {
+                                        webView2.loadUrl(url.toString());
+                                        webView1.loadUrl(wvUrl.toString());
+                                        if(Paras.devType.equals(Paras.HAI_KANG)) {
+                                            Paras.powerManager.StatusBar();
+                                        }
+                                        Paras.programUrl=url.toString();
+                                        Paras.underUrl=wvUrl.toString();
+                                    }
+                                    /*webView2.loadUrl(url.toString());
                                     webView1.loadUrl(wvUrl.toString());
+                                    if(Paras.devType.equals(Paras.HAI_KANG)) {
+                                        Paras.powerManager.StatusBar();
+                                    }*/
                                 } catch (Exception e) {
                                     LogHelper.Error(e);
                                 }
@@ -342,7 +327,7 @@ public class ShowActivity extends BaseActivity {
                             }
                         });
                     }
-                //}
+                }
             }
 
         } catch (Exception e) {
@@ -384,7 +369,7 @@ public class ShowActivity extends BaseActivity {
             public void run() {
                 String ip = NetWorkUtils.GetIP(Paras.appContext);
                 LogHelper.Debug("checkin " + ip + " " + cardNo);
-                webView2.loadUrl("javascript:checkin(\"" + ip + "\"," + "\"" + cardNo + "\")");
+                webView1.loadUrl("javascript:checkin(\"" + ip + "\"," + "\"" + cardNo + "\")");
             }
         });
     }
@@ -395,10 +380,8 @@ public class ShowActivity extends BaseActivity {
             public void run() {
                 String ip = NetWorkUtils.GetIP(Paras.appContext);
                 try {
-                    LogHelper.Debug("调用refresh："+ip);
                     webView1.loadUrl("javascript:refresh(\"" + ip + "\")");
-                } catch (Exception e)
-                {
+                } catch (Exception e) {
                     LogHelper.Error(e.toString());
                 }
 

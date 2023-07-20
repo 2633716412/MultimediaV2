@@ -15,6 +15,7 @@ import android.view.View;
 import androidx.core.content.FileProvider;
 
 import com.example.multimediav2.BaseActivity;
+import com.zcapi;
 
 import java.io.File;
 import java.util.Calendar;
@@ -28,7 +29,7 @@ public class PowerManagerA2040_XiPin extends BasePowerManager{
     private PowerManager mPowerManager;
     private DevicePolicyManager policyManager;
     Context context;
-
+    boolean isOpen=true;
     public PowerManagerA2040_XiPin(Context context) {
 
         this.context = context;
@@ -56,6 +57,7 @@ public class PowerManagerA2040_XiPin extends BasePowerManager{
     }*/
     @Override
     public void ShutDown() {
+        isOpen=false;
         Intent intent = new Intent("com.zc.zclcdoff");
         context.sendBroadcast(intent);
         Paras.volume=0;
@@ -80,6 +82,7 @@ public class PowerManagerA2040_XiPin extends BasePowerManager{
     }*/
     @Override
     public void Open() {
+        isOpen=true;
         Paras.volume=100;
         Intent intent = new Intent("wits.action.reboot");
         context.sendBroadcast(intent);
@@ -104,6 +107,7 @@ public class PowerManagerA2040_XiPin extends BasePowerManager{
     }*/
     @Override
     public void Reboot() {
+        isOpen=true;
         Intent intent = new Intent("wits.action.reboot");
         context.sendBroadcast(intent);
     }
@@ -122,6 +126,18 @@ public class PowerManagerA2040_XiPin extends BasePowerManager{
         }
 
         Paras.appContext.startActivity(intent);
+    }
+
+    @Override
+    public void StatusBar() {
+        zcapi zcApi=new zcapi();
+        zcApi.getContext(Paras.appContext);
+        zcApi.setStatusBar(false);
+    }
+    @Override
+    public boolean IsOpen()
+    {
+        return isOpen;
     }
 
     private PowerManager.WakeLock mWakeLock;

@@ -181,6 +181,39 @@ public class BaseActivity extends Activity {
         }
     }
 
+    public  static String A40XiPinScreenShot()
+    {
+        File file= Paras.appContext.getExternalFilesDir("nf");
+        String dir1 = file.getPath();
+        deleteFile(dir1,"jpg");
+        try {
+            fileUnitDef = new FileUnitDef();
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+            String fn = formatter.format(new Date()) + ".jpg";
+            File fileSave = Paras.appContext.getExternalFilesDir("nf");
+            String dir=fileSave.getPath();
+            file=new File(dir,fn);
+            /*zcapi zcApi=new zcapi();
+            zcApi.getContext(Paras.appContext);
+            zcApi.screenshot(dir,fn);*/
+            Intent intent = new Intent("com.zc.screenshot");
+            intent.putExtra("path", dir);
+            intent.putExtra("name", fn);
+            Paras.appContext.sendBroadcast(intent);
+
+            /*byte[] bytes=File2Bytes(file);
+            //file.delete();
+            Bitmap bitmap= BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+            Bitmap bitmap1=adjustPhotoRotation(bitmap,90);
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            bitmap1.compress(Bitmap.CompressFormat.JPEG, 80, stream);
+            fileUnitDef.Save(dir,fn,stream.toByteArray());*/
+        } catch (Exception e) {
+            LogHelper.Error("截屏方法zcApi.screenshot失败："+e);
+        }
+        return file.getPath();
+    }
+
     @Override
     protected void onDestroy() {
         lock.lock();
@@ -188,6 +221,7 @@ public class BaseActivity extends Activity {
         lock.unlock();
         super.onDestroy();
     }
+
 
 
     public static void SkipTo(Class<? extends Activity> cls) {

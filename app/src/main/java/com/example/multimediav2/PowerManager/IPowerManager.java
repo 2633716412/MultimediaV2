@@ -18,5 +18,6 @@ public interface IPowerManager {
     void Reboot();
     void setSystemTime(Context context);
     void Install(String path);
+    void StatusBar();
     String GetName();
 }

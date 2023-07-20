@@ -1,6 +1,9 @@
 package com.example.multimediav2.PowerManager;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 
 import com.example.multimediav2.HttpUnit.HttpUnitFactory;
 import com.hikvision.dmb.TimeSwitchConfig;
@@ -28,7 +31,7 @@ public class PowerManager_HaiKang implements IPowerManager {
 
     private Context context;
     private List<OSTime> osTimes;
-
+    boolean isOpen=true;
     public PowerManager_HaiKang(Context context) {
         this.context = context;
         InfoSystemApi.openAdb();
@@ -44,15 +47,45 @@ public class PowerManager_HaiKang implements IPowerManager {
     public void Install(String path) {
         //更新的时候启动应用
         //InfoUtilApi.startUp("com.example.multimediav2","com.example.multimediav2.MainActivity");
-        InfoUtilApi.enableProtection("com.example.multimediav2",true);
+        //使能
+        //InfoUtilApi.enableProtection("com.example.multimediav2",true);
+        Intent intent = Paras.appContext.getPackageManager().getLaunchIntentForPackage(Paras.appContext.getPackageName());
+        PendingIntent restartIntent = PendingIntent.getActivity(Paras.appContext, 0, intent, 0);
+        AlarmManager mgr = (AlarmManager) Paras.appContext.getSystemService(Context.ALARM_SERVICE);
+        mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 10 * 1000, restartIntent);
         InfoUtilApi.silentInstallation(path);
         //InfoSystemApi.execCommand ("pm install -r "+path+" && am start com.example.multimediav2.MainActivity");
         //System.exit(0);
     }
 
     @Override
+    public void StatusBar() {
+        if(InfoDisplayApi.getStatusBarEnable()) {
+            int statusBar=InfoDisplayApi.setStatusBarEnable(false);
+            LogHelper.Debug("状态栏使能设置结果"+statusBar);
+        }
+        if(InfoDisplayApi.getNavigationBarEnable()) {
+            int statusNav=InfoDisplayApi.setNavigationBarEnable(false);
+            LogHelper.Debug("导航栏使能设置结果"+statusNav);
+        }
+        /*try {
+            Thread.sleep(5000);
+            int statusBar=InfoDisplayApi.setStatusBarEnable(false);
+            LogHelper.Debug("状态栏使能设置结果"+statusBar);
+            int statusNav=InfoDisplayApi.setNavigationBarEnable(false);
+            LogHelper.Debug("导航栏使能设置结果"+statusNav);
+        } catch (InterruptedException e) {
+            LogHelper.Error("StatusBar异常："+e);
+        }*/
+    }
+
+    @Override
     public boolean IsOpen() {
-        return false;
+        if(InfoDisplayApi.getBacklightValue()<=0) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     @Override
@@ -88,7 +121,7 @@ public class PowerManager_HaiKang implements IPowerManager {
         //String msg = "设置关机时间:" + end.ToString() + " " + offTime + "，开机时间：" + begin.ToString() + " " + onTime;
         String msg = "设置 关机时间：" + end.ToString() + "，开机时间：" + begin.ToString();
         LogHelper.Debug(msg);
-        Paras.msgManager.SendMsg(msg);
+        //Paras.msgManager.SendMsg(msg);
         setTimeSwitch(offTime, onTime);
     }
 
@@ -105,6 +138,7 @@ public class PowerManager_HaiKang implements IPowerManager {
 
     @Override
     public void ShutDown() {
+        isOpen=false;
         //息屏
         InfoDisplayApi.disableBacklight();
         //关机
@@ -113,6 +147,7 @@ public class PowerManager_HaiKang implements IPowerManager {
 
     @Override
     public void Open() {
+        isOpen=true;
         /*int res=InfoSystemApi.execCommand("sudo su\nfile /sys/power/state\ncat /sys/power/state\necho on > /sys/power/state\nexit\n");
         LogHelper.Debug("shell结果："+res);*/
         InfoDisplayApi.enableBacklight();
@@ -120,6 +155,7 @@ public class PowerManager_HaiKang implements IPowerManager {
 
     @Override
     public void Reboot() {
+        isOpen=true;
         InfoSystemApi.reboot();
     }
 

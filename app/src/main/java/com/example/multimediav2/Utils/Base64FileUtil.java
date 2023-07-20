@@ -56,32 +56,46 @@ public class Base64FileUtil {
      *path：文件路径
      */
     public static String encodeBase64File(String path) throws Exception {
-        if(TextUtils.isEmpty(path)){
-            return null;
-        }
-        InputStream is = null;
-        byte[] data = null;
+        int i=0;
         String result = null;
-        try{
-            is = new FileInputStream(path);
-            //创建一个字符流大小的数组。
-            data = new byte[is.available()];
-            //写入数组
-            is.read(data);
-            //用默认的编码格式进行编码
-            result = Base64.encodeToString(data, Base64.NO_CLOSE);
-        }catch (Exception e){
-            e.printStackTrace();
-        }finally {
-            if(null !=is){
-                try {
-                    is.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+        //防止获取图片时图片还未生成
+        while (i<1000000) {
+            if(TextUtils.isEmpty(path)){
+                i++;
 
+                //return null;
+            }
+            InputStream is = null;
+            byte[] data = null;
+
+            try{
+                is = new FileInputStream(path);
+                //创建一个字符流大小的数组。
+                data = new byte[is.available()];
+                //写入数组
+                is.read(data);
+                //用默认的编码格式进行编码
+                result = Base64.encodeToString(data, Base64.NO_CLOSE);
+                if(result.isEmpty()) {
+                    i++;
+                } else {
+                    break;
+                }
+
+            }catch (Exception e){
+                e.printStackTrace();
+            }finally {
+                if(null !=is){
+                    try {
+                        is.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            }
         }
+
         return result;
     }
 }

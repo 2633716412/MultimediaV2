@@ -80,6 +80,7 @@ public class CmdManager {
         }*/
         //isIgnoringBatteryOptimizations();
         deviceData.setMac(MacUnit.GetMac(context));
+        Paras.powerManager = PowerManagerFactory.Get();
         //保存设备信息
         Thread thread = new Thread(new Runnable() {
             @Override
@@ -98,11 +99,13 @@ public class CmdManager {
                         String jsonStr="";
                         try {
                             jsonStr= HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/sava",jsonObject.toString());
+
                         } catch (Exception e) {
                             LogHelper.Error("保存设备异常："+e);
                         }
                         if(!Objects.equals(jsonStr, "")) {
                             isStopped=true;
+
                             JSONObject object= new JSONObject(jsonStr);
                             boolean res=object.getBoolean("success");
                             if(!res) {
@@ -128,16 +131,15 @@ public class CmdManager {
             textSpeaker2 = new TextSpeaker2(Paras.appContext);
         } catch (Exception ex) {
             LogHelper.Error("初始化语音异常：" + ex);
-            Paras.msgManager.SendMsg("初始化语音异常：" + ex);
+            //Paras.msgManager.SendMsg("初始化语音异常：" + ex);
         }
 
-        Paras.powerManager = PowerManagerFactory.Get();
+
 
         //设置当前时间的同时，设置开关机时间
         Paras.powerManager.SetTime(deviceData.osTimes);
 
         //心跳子线程
-
         PollingUtil pollingUtil=new PollingUtil(Paras.handler);
         Thread task= new Thread(new Runnable() {
             @Override
@@ -149,27 +151,43 @@ public class CmdManager {
                             while (!Objects.equals(deviceData.getSn(), "")) {
                                 String jsonStr="";
                                 //更新心跳时间
+                                //Long device_status=Paras.powerManager.IsOpen()?0L:1L;
                                 JSONObject updateObject=new JSONObject();
                                 updateObject.put("sn",deviceData.getSn());
                                 updateObject.put("is_record",1);
+                                //updateObject.put("device_status",device_status);
                                 String updateRes="";
                                 try {
+
                                     updateRes= HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/updateHeartTime",updateObject.toString());
                                 } catch (Exception e) {
-                                    LogHelper.Error("更新心跳时间异常："+e);
-                                    Paras.updateProgram=true;
+                                    /*LogHelper.Error("更新心跳时间异常："+e);
+                                    Paras.msgManager.SendMsg("网络连接异常");*/
+                                    if (Paras.fail_num==0) {
+                                        Paras.fail_num++;
+                                    } else {
+                                        Paras.fail_num++;
+                                        if(Paras.fail_num>=30) {
+                                            Paras.fail_num=0;
+                                            LogHelper.Error("更新心跳时间异常："+e);
+                                            Paras.msgManager.SendMsg("网络连接异常");
+                                            Paras.updateProgram=true;
+                                        }
+                                    }
+
                                 }
                                 if(!Objects.equals(updateRes, "")) {
                                     JSONObject timeObject= new JSONObject(updateRes);
                                     boolean res = timeObject.getBoolean("success");
                                     if(res) {
-                                        if (Paras.num==0) {
+                                        Paras.fail_num=0;
+                                        if (Paras.success_num==0) {
                                             LogHelper.Debug("更新心跳时间成功");
-                                            Paras.num++;
+                                            Paras.success_num++;
                                         } else {
-                                            Paras.num++;
-                                            if(Paras.num>=60) {
-                                                Paras.num=0;
+                                            Paras.success_num++;
+                                            if(Paras.success_num>=60) {
+                                                Paras.success_num=0;
                                             }
                                         }
 
@@ -195,6 +213,8 @@ public class CmdManager {
                                             case "1001":
                                                 LogHelper.Debug("下发节目");
                                                 Paras.updateProgram=true;
+                                                Paras.underUrl="";
+                                                Paras.programUrl="";
                                                 break;
                                             case "1002":
                                                 LogHelper.Debug("开始开机");
@@ -214,7 +234,7 @@ public class CmdManager {
                                                 LogHelper.Debug("截屏开始");
                                                 String base64Str="";
                                                 String picPath=Paras.appContext.getExternalFilesDir("nf").getPath();
-                                                if("hk".equals(Paras.devType)) {
+                                                if(Paras.HAI_KANG.equals(Paras.devType)) {
                                                     deleteFile(picPath,"jpg");
                                                     View dView = BaseActivity.currActivity.getWindow().getDecorView();
                                                     Bitmap bmp=InfoDisplayApi.screenShot(dView.getHeight(),dView.getWidth());
@@ -230,6 +250,9 @@ public class CmdManager {
                                                     picPath+=fn;
                                                 } else if(Paras.devType.equals(Paras.HAI_KANG_6055)) {
                                                     picPath = BaseActivity.HK6055Screenshot();
+                                                    base64Str = Base64FileUtil.encodeBase64File(picPath);
+                                                } else if(Paras.DEVA40_XiPin.equals(Paras.devType)) {
+                                                    picPath = BaseActivity.A40XiPinScreenShot();
                                                     base64Str = Base64FileUtil.encodeBase64File(picPath);
                                                 } else {
                                                     picPath = BaseActivity.Screenshot();
@@ -298,6 +321,8 @@ public class CmdManager {
                                             case "1009":
                                                 Paras.msgManager.SendMsg("刷新节目");
                                                 LogHelper.Debug("刷新节目");
+                                                Paras.underUrl="";
+                                                Paras.programUrl="";
                                                 Paras.updateProgram=true;
                                                 break;
                                             case "1010":
@@ -412,6 +437,13 @@ public class CmdManager {
                                                 int ret1 = p1.exitValue();
                                                 LogHelper.Debug(ret1 + "");
                                                 break;
+                                            case "1017":
+                                                int streamType=contentObject.getInt("streamType");
+                                                deviceData.setStream_type(streamType);
+                                                spUnit.Set("DeviceData",deviceData);
+                                                textSpeaker2=new TextSpeaker2(Paras.appContext);
+                                                LogHelper.Debug("语音类型调整为："+streamType);
+                                                break;
                                             case "1033":
                                                 File logFile=new File(LogHelper.logFilePath);
                                                 FileWriter fileWriter=new FileWriter(logFile);
@@ -442,11 +474,11 @@ public class CmdManager {
             pollingUtil.startPolling(task,Paras.heart_time*1000,true);
             Paras.hasRun[0]=true;
         }
-        MyThread myThread=new MyThread();
+        /*MyThread myThread=new MyThread();
         if(!Paras.hasRun[0]) {
             pollingUtil.startPolling(myThread,Paras.heart_time*1000,true);
             Paras.hasRun[0]=true;
-        }
+        }*/
         //定时开关机监测
         Thread listenThread=new Thread(new Runnable() {
             @Override
@@ -537,7 +569,7 @@ public class CmdManager {
                             LogHelper.Debug("截屏开始");
                             String base64Str="";
                             String picPath=Paras.appContext.getExternalFilesDir("nf").getPath();
-                            if("hk".equals(Paras.devType)) {
+                            if(Paras.HAI_KANG.equals(Paras.devType)) {
                                 deleteFile(picPath,"jpg");
                                 View dView = BaseActivity.currActivity.getWindow().getDecorView();
                                 Bitmap bmp= InfoDisplayApi.screenShot(dView.getHeight(),dView.getWidth());
@@ -553,6 +585,9 @@ public class CmdManager {
                                 picPath+=fn;
                             } else if(Paras.devType.equals(Paras.HAI_KANG_6055)) {
                                 picPath = BaseActivity.HK6055Screenshot();
+                                base64Str = Base64FileUtil.encodeBase64File(picPath);
+                            } else if(Paras.DEVA40_XiPin.equals(Paras.devType)) {
+                                picPath = BaseActivity.A40XiPinScreenShot();
                                 base64Str = Base64FileUtil.encodeBase64File(picPath);
                             } else {
                                 picPath = BaseActivity.Screenshot();

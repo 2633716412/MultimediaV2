@@ -72,8 +72,19 @@ public class PowerManager_HK6055 implements IPowerManager{
     }
 
     @Override
+    public void StatusBar() {
+        smdtManager.smdtSetStatusBar(Paras.appContext,false);
+    }
+
+    @Override
     public boolean IsOpen() {
-        return false;
+
+        if(smdtManager.smdtGetLcdLightStatus()==1) {
+            return true;
+        } else {
+            return false;
+        }
+
     }
 
     @Override

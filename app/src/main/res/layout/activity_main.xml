@@ -70,7 +70,7 @@
                 android:selectAllOnFocus="true"
                 android:maxLines="1"
                 android:paddingTop = "5dp"
-                android:text=""
+                android:text="10"
                 android:background="@drawable/rounded_rectangle"
                 android:id="@+id/inter1"/>
             <EditText
@@ -81,7 +81,7 @@
                 android:selectAllOnFocus="true"
                 android:maxLines="1"
                 android:paddingTop = "5dp"
-                android:text=""
+                android:text="0"
                 android:background="@drawable/rounded_rectangle"
                 android:id="@+id/inter2"/>
             <EditText
@@ -92,7 +92,7 @@
                 android:selectAllOnFocus="true"
                 android:maxLines="1"
                 android:paddingTop = "5dp"
-                android:text=""
+                android:text="202"
                 android:background="@drawable/rounded_rectangle"
                 android:id="@+id/inter3"/>
 
@@ -105,7 +105,7 @@
                 android:digits="1234567890:\n\r"
                 android:maxLines="1"
                 android:paddingTop="5dp"
-                android:text=""
+                android:text="103"
                 android:selectAllOnFocus="true" />
         </LinearLayout>
         <LinearLayout
@@ -127,7 +127,7 @@
                 android:inputType="number"
                 android:maxLines="1"
                 android:paddingTop = "5dp"
-                android:text=""
+                android:text="80"
                 android:background="@drawable/rounded_rectangle"
                 android:id="@+id/port"/>
         </LinearLayout>

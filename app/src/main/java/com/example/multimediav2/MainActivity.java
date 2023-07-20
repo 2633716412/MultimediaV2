@@ -12,7 +12,6 @@ import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -23,7 +22,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 
@@ -49,13 +47,12 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import Modules.DeviceData;
-import Modules.IMsgManager;
 import Modules.LogHelper;
 import Modules.OSTime;
 import Modules.Paras;
 import Modules.SPUnit;
 
-public class MainActivity extends BaseActivity implements IMsgManager {
+public class MainActivity extends BaseActivity {
 
     private EditText device_name;
     private EditText inter1;
@@ -73,8 +70,8 @@ public class MainActivity extends BaseActivity implements IMsgManager {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Paras.appContext=this;
-        Paras.msgManager=this;
+        //Paras.appContext=this;
+        //Paras.msgManager=this;
         Paras.handler=new Handler();
 
         Paras.androidNumber= "Android"+ Build.VERSION.RELEASE;
@@ -148,13 +145,14 @@ public class MainActivity extends BaseActivity implements IMsgManager {
                                 if(!Objects.equals(result, "")) {
                                     JSONObject object = new JSONObject(result);
                                     urlSuffix = object.getString("data");
+                                    Paras.mulHtmlAddr=GetUrl(Paras.mulHtmlAddr,deviceData.getApi_ip(),deviceData.getApi_port(),urlSuffix);
                                     isStopped=true;
                                 }
                             } catch (Exception e) {
                                 LogHelper.Error("获取节目地址异常："+e);
                             }
                         }
-                        Paras.mulHtmlAddr=GetUrl(Paras.mulHtmlAddr,deviceData.getApi_ip(),deviceData.getApi_port(),urlSuffix);
+
                         try {
                             Thread.sleep(5000);
                         } catch (Exception e) {
@@ -188,10 +186,15 @@ public class MainActivity extends BaseActivity implements IMsgManager {
 
             int ipAddress = wifiInfo.getIpAddress();
             if(!intToIp(ipAddress).equals("0.0.0.0")) {
-                deviceData.setDevice_ip(intToIp(ipAddress));
+                if(!intToIp(ipAddress).isEmpty()) {
+                    deviceData.setDevice_ip(intToIp(ipAddress));
+                }
             } else {
                 String ip=getLocalIpAddress();
-                deviceData.setDevice_ip(ip);
+                if(!ip.isEmpty()) {
+                    deviceData.setDevice_ip(ip);
+                }
+
             }
             if(deviceData.getDevice_ip()!=null&& !Objects.equals(deviceData.getDevice_ip(), "")) {
                 spUnit.Set("DeviceData",deviceData);
@@ -230,10 +233,16 @@ public class MainActivity extends BaseActivity implements IMsgManager {
 
                     int ipAddress = wifiInfo.getIpAddress();
                     if(!intToIp(ipAddress).equals("0.0.0.0")) {
-                        data.setDevice_ip(intToIp(ipAddress));
+                        if(!intToIp(ipAddress).isEmpty()) {
+                            data.setDevice_ip(intToIp(ipAddress));
+                        }
+
                     } else {
                         String ip=getLocalIpAddress();
-                        data.setDevice_ip(ip);
+                        if(!ip.isEmpty()) {
+                            data.setDevice_ip(ip);
+                        }
+
                     }
 
                     StringBuilder ipStr=new StringBuilder(inter1.getText().toString());
@@ -249,9 +258,9 @@ public class MainActivity extends BaseActivity implements IMsgManager {
                     spUnit.Set("DeviceData",data);
                     DropData deviceType=(DropData)device_type.getSelectedItem();
                     data.setDevice_type(deviceType.getCode());
-                    if(data.getDevice_type().equals(Paras.DEVA20_XiPinBox)) {
+                    /*if(data.getDevice_type().equals(Paras.DEVA20_XiPinBox)) {
                         checkAndTurnOnDeviceManager(null);
-                    }
+                    }*/
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
@@ -267,13 +276,14 @@ public class MainActivity extends BaseActivity implements IMsgManager {
                                         if(!Objects.equals(result, "")) {
                                             JSONObject object = new JSONObject(result);
                                             urlSuffix = object.getString("data");
+                                            Paras.mulHtmlAddr=GetUrl(Paras.mulHtmlAddr,deviceData.getApi_ip(),deviceData.getApi_port(),urlSuffix);
                                             isStopped=true;
                                         }
                                     } catch (Exception e) {
                                         LogHelper.Error("获取节目地址异常："+e);
                                     }
                                 }
-                                Paras.mulHtmlAddr=GetUrl(Paras.mulHtmlAddr,deviceData.getApi_ip(),deviceData.getApi_port(),urlSuffix);
+
                                 try {
                                     Thread.sleep(5000);
                                 } catch (Exception e) {
@@ -526,7 +536,7 @@ public class MainActivity extends BaseActivity implements IMsgManager {
     }
 
 
-    public void SendMsg(String msg) {
+    /*public void SendMsg(String msg) {
         Message message = new Message();
         message.obj = msg;
         mHandler.sendMessage(message);
@@ -539,7 +549,7 @@ public class MainActivity extends BaseActivity implements IMsgManager {
             super.handleMessage(msg);
             Toast.makeText(Paras.appContext, msg.obj.toString(), Toast.LENGTH_LONG).show();
         }
-    };
+    };*/
 
     private String GetCnWeek(int n) {
         switch (n) {
