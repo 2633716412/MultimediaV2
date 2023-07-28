@@ -30,6 +30,7 @@ import com.example.multimediav2.Models.CmdManager;
 import com.example.multimediav2.Models.DropData;
 import com.example.multimediav2.Models.MyAdapter;
 import com.example.multimediav2.Models.MyBroadcastReceiver;
+import com.example.multimediav2.Utils.NetWorkUtils;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -64,7 +65,7 @@ public class MainActivity extends BaseActivity {
     private Button btu_save;
     private TextView switch_text;
     private Spinner spinner;
-
+    private Intent mServiceIntent;
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,7 +74,7 @@ public class MainActivity extends BaseActivity {
         //Paras.appContext=this;
         //Paras.msgManager=this;
         Paras.handler=new Handler();
-
+        //mServiceIntent = new Intent(this, MyService.class);
         Paras.androidNumber= "Android"+ Build.VERSION.RELEASE;
         Paras.Wiidth = getResources().getDisplayMetrics().widthPixels;
         Paras.Height = getResources().getDisplayMetrics().heightPixels;
@@ -141,12 +142,14 @@ public class MainActivity extends BaseActivity {
                         String urlSuffix="";
                         if(!Objects.equals(deviceData.getApi_ip(), "")) {
                             try {
-                                String result= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getUrlSuffix");
-                                if(!Objects.equals(result, "")) {
-                                    JSONObject object = new JSONObject(result);
-                                    urlSuffix = object.getString("data");
-                                    Paras.mulHtmlAddr=GetUrl(Paras.mulHtmlAddr,deviceData.getApi_ip(),deviceData.getApi_port(),urlSuffix);
-                                    isStopped=true;
+                                if(NetWorkUtils.isNetworkAvailable(Paras.appContext)) {
+                                    String result= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getUrlSuffix");
+                                    if(!Objects.equals(result, "")) {
+                                        JSONObject object = new JSONObject(result);
+                                        urlSuffix = object.getString("data");
+                                        Paras.mulHtmlAddr=GetUrl(Paras.mulHtmlAddr,deviceData.getApi_ip(),deviceData.getApi_port(),urlSuffix);
+                                        isStopped=true;
+                                    }
                                 }
                             } catch (Exception e) {
                                 LogHelper.Error("获取节目地址异常："+e);
@@ -272,12 +275,14 @@ public class MainActivity extends BaseActivity {
                                 String urlSuffix="";
                                 if(!Objects.equals(deviceData.getApi_ip(), "")) {
                                     try {
-                                        String result= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getUrlSuffix");
-                                        if(!Objects.equals(result, "")) {
-                                            JSONObject object = new JSONObject(result);
-                                            urlSuffix = object.getString("data");
-                                            Paras.mulHtmlAddr=GetUrl(Paras.mulHtmlAddr,deviceData.getApi_ip(),deviceData.getApi_port(),urlSuffix);
-                                            isStopped=true;
+                                        if(NetWorkUtils.isNetworkAvailable(Paras.appContext)) {
+                                            String result= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getUrlSuffix");
+                                            if(!Objects.equals(result, "")) {
+                                                JSONObject object = new JSONObject(result);
+                                                urlSuffix = object.getString("data");
+                                                Paras.mulHtmlAddr=GetUrl(Paras.mulHtmlAddr,deviceData.getApi_ip(),deviceData.getApi_port(),urlSuffix);
+                                                isStopped=true;
+                                            }
                                         }
                                     } catch (Exception e) {
                                         LogHelper.Error("获取节目地址异常："+e);

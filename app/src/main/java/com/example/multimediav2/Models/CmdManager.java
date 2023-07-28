@@ -16,6 +16,7 @@ import com.example.multimediav2.HttpUnit.HttpUnitFactory;
 import com.example.multimediav2.PowerManager.PowerManagerFactory;
 import com.example.multimediav2.Utils.AudioUtil;
 import com.example.multimediav2.Utils.Base64FileUtil;
+import com.example.multimediav2.Utils.NetWorkUtils;
 import com.example.multimediav2.Utils.PollingUtil;
 import com.hikvision.dmb.display.InfoDisplayApi;
 
@@ -96,10 +97,13 @@ public class CmdManager {
                         jsonObject.put("os",androidNumStr);
                         jsonObject.put("sn",deviceData.getSn());
                         jsonObject.put("org_id",deviceData.getOrgId());
+                        jsonObject.put("device_type",deviceData.getDevice_type());
+                        jsonObject.put("version",NetWorkUtils.getVersionName(Paras.appContext));
                         String jsonStr="";
                         try {
-                            jsonStr= HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/sava",jsonObject.toString());
-
+                            if(NetWorkUtils.isNetworkAvailable(Paras.appContext)) {
+                                jsonStr= HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/sava",jsonObject.toString());
+                            }
                         } catch (Exception e) {
                             LogHelper.Error("保存设备异常："+e);
                         }
@@ -151,15 +155,17 @@ public class CmdManager {
                             while (!Objects.equals(deviceData.getSn(), "")) {
                                 String jsonStr="";
                                 //更新心跳时间
-                                //Long device_status=Paras.powerManager.IsOpen()?0L:1L;
+                                Long device_status=Paras.powerManager.IsOpen()?0L:1L;
                                 JSONObject updateObject=new JSONObject();
                                 updateObject.put("sn",deviceData.getSn());
                                 updateObject.put("is_record",1);
-                                //updateObject.put("device_status",device_status);
+                                updateObject.put("device_status",device_status);
                                 String updateRes="";
                                 try {
+                                    if(NetWorkUtils.isNetworkAvailable(Paras.appContext)) {
+                                        updateRes= HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/updateHeartTime",updateObject.toString());
+                                    }
 
-                                    updateRes= HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/updateHeartTime",updateObject.toString());
                                 } catch (Exception e) {
                                     /*LogHelper.Error("更新心跳时间异常："+e);
                                     Paras.msgManager.SendMsg("网络连接异常");*/
@@ -194,7 +200,9 @@ public class CmdManager {
                                     }
                                 }
                                 try {
-                                    jsonStr= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getCmd"+"?sn="+deviceData.getSn());
+                                    if(NetWorkUtils.isNetworkAvailable(Paras.appContext)) {
+                                        jsonStr= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getCmd"+"?sn="+deviceData.getSn());
+                                    }
                                 } catch (Exception e) {
                                     LogHelper.Error("获取命令异常："+e);
                                 }
@@ -397,7 +405,6 @@ public class CmdManager {
                                                 Long voiceVolume=contentObject.getLong("voiceVolume");
                                                 String voiceDate=contentObject.getString("voiceData");
                                                 Long voiceSpeed=contentObject.getLong("voiceSpeed");
-                                                //Paras.msgManager.SendMsg("开始呼叫：" + voiceDate);
                                                 LogHelper.Debug("开始呼叫：" + voiceDate);
                                                 Paras.volume= Math.toIntExact(voiceVolume);
                                                 //textSpeaker2.setSpeed(voiceSpeed);

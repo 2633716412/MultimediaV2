@@ -59,6 +59,8 @@ public class Paras {
 
     public static IMsgManager msgManager;
 
+    public static TextSpeaker2 textSpeaker2;
+
     public static boolean first = true;
     //判断是否刷新节目单
     public static boolean updateProgram = false;

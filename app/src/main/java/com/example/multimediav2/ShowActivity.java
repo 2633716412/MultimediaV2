@@ -2,16 +2,16 @@ package com.example.multimediav2;
 
 import android.annotation.SuppressLint;
 import android.app.ActionBar;
-import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -20,6 +20,7 @@ import androidx.annotation.RequiresApi;
 
 import com.example.multimediav2.HttpUnit.HttpUnitFactory;
 import com.example.multimediav2.Utils.DateUtil;
+import com.example.multimediav2.Utils.NetWorkUtils;
 import com.example.multimediav2.Utils.PollingUtil;
 
 import org.json.JSONArray;
@@ -33,7 +34,6 @@ import java.util.Objects;
 
 import Modules.DeviceData;
 import Modules.LogHelper;
-import Modules.NetWorkUtils;
 import Modules.Paras;
 import Modules.SPUnit;
 import Modules.StringUnit;
@@ -48,7 +48,7 @@ public class ShowActivity extends BaseActivity {
     private Date endTime=new Date();
     public static KeepFocusThread keepFocusThread;
     private Thread programThread;
-    private Intent mServiceIntent;
+    //private Intent mServiceIntent;
     private PollingUtil pollingUtil=new PollingUtil(Paras.handler);
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @SuppressLint("SetJavaScriptEnabled")
@@ -68,12 +68,15 @@ public class ShowActivity extends BaseActivity {
         //隐藏状态栏时也可以把ActionBar也隐藏掉
         ActionBar actionBar = getActionBar();
         Paras.powerManager.StatusBar();
+        //清除缓存
+        //webView1.clearHistory();
+        //webView2.clearHistory();
 
-        mServiceIntent = new Intent(this, MyService.class);
+        //mServiceIntent = new Intent(this, MyService.class);
         SPUnit spUnit = new SPUnit(ShowActivity.this);
         DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
-        LogHelper.Debug("版本："+getVersionName(Paras.appContext)+"IP:"+deviceData.getDevice_ip());
-        versionText.setText("IP:"+deviceData.getDevice_ip()+" 版本："+getVersionName(Paras.appContext));
+        LogHelper.Debug("版本："+NetWorkUtils.getVersionName(Paras.appContext)+"IP:"+deviceData.getDevice_ip());
+        versionText.setText("IP:"+deviceData.getDevice_ip()+" 版本："+NetWorkUtils.getVersionName(Paras.appContext));
         webView1=findViewById(R.id.webView1);
         WebSettings webSetting1=webView1.getSettings();
         webSetting1.setJavaScriptEnabled(true);
@@ -89,11 +92,21 @@ public class ShowActivity extends BaseActivity {
         WebSettings webSetting2=webView2.getSettings();
         webSetting2.setJavaScriptEnabled(true);
         //webView2.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-        //webView2.setWebViewClient(new WebViewClient());
+        webView2.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, android.webkit.WebResourceError error) {
+                // 当加载失败时，重复刷新页面
+                view.reload();
+            }
+        });
         webView2.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onShowCustomView(View view, CustomViewCallback callback) {
                 super.onShowCustomView(view, callback);
+            }
+            @Deprecated
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                view.reload();
             }
         });
         webSetting2.setJavaScriptCanOpenWindowsAutomatically(true);
@@ -229,7 +242,7 @@ public class ShowActivity extends BaseActivity {
         Paras.programUrl="";
         pollingUtil.startPolling(programThread,5 * 1000,false);
         //Paras.handler.post(programThread);
-        stopService(mServiceIntent);
+        //stopService(mServiceIntent);
     }
 
     @Override
@@ -240,7 +253,7 @@ public class ShowActivity extends BaseActivity {
         Paras.programUrl="";
         pollingUtil.endPolling(programThread);
         //Paras.handler.removeCallbacks(programThread);
-        startService(mServiceIntent);
+        //startService(mServiceIntent);
     }
 
     public Date GetProgramData(String sn) {
@@ -250,8 +263,10 @@ public class ShowActivity extends BaseActivity {
             while (!isStopped) {
                 String jsonStr="";
                 try {
-                    jsonStr = HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getProgramData?sn=" + sn);
-                    isStopped=true;
+                    if(NetWorkUtils.isNetworkAvailable(Paras.appContext)) {
+                        jsonStr = HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getProgramData?sn=" + sn);
+                        isStopped=true;
+                    }
                 } catch (Exception e) {
                     LogHelper.Error("获取节目异常："+e);
                     continue;
@@ -407,22 +422,5 @@ public class ShowActivity extends BaseActivity {
                 }
             }
         }
-    }
-    /**
-     * 获取版本名称
-     *
-     * @param context
-     * @return
-     */
-    private String getVersionName(Context context) {
-        String versionName = "";
-        try {
-            // 获取软件版本名称
-            versionName = context.getPackageManager().getPackageInfo(
-                    "com.example.multimediav2", PackageManager.GET_ACTIVITIES).versionName;
-        } catch (PackageManager.NameNotFoundException e) {
-            LogHelper.Error(e.toString());
-        }
-        return versionName;
     }
 }

@@ -1,6 +1,9 @@
-package Modules;
+package com.example.multimediav2.Utils;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.util.Log;
@@ -10,6 +13,9 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
+
+import Modules.LogHelper;
+import Modules.Paras;
 
 public class NetWorkUtils {
 
@@ -110,5 +116,35 @@ public class NetWorkUtils {
         }
         // return null;
     }
-
+    /**
+     * 检查网络是否可用
+     *
+     * @param context 上下文对象
+     * @return true表示网络可用，false表示网络不可用
+     */
+    public static boolean isNetworkAvailable(Context context) {
+        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectivityManager != null) {
+            NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+            return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+        }
+        return false;
+    }
+    /**
+     * 获取版本名称
+     *
+     * @param context
+     * @return
+     */
+    public static String getVersionName(Context context) {
+        String versionName = "";
+        try {
+            // 获取软件版本名称
+            versionName = context.getPackageManager().getPackageInfo(
+                    "com.example.multimediav2", PackageManager.GET_ACTIVITIES).versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            LogHelper.Error(e.toString());
+        }
+        return versionName;
+    }
 }
