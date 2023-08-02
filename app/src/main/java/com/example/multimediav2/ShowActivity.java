@@ -37,6 +37,7 @@ import Modules.LogHelper;
 import Modules.Paras;
 import Modules.SPUnit;
 import Modules.StringUnit;
+import Modules.TextSpeaker2;
 
 public class ShowActivity extends BaseActivity {
 
@@ -58,6 +59,7 @@ public class ShowActivity extends BaseActivity {
         setContentView(R.layout.activity_show);
         btn=findViewById(R.id.back);
         btn.getBackground().setAlpha(0);
+        Paras.textSpeaker2=new TextSpeaker2(Paras.appContext);
         //Paras.appContext=this;
         TextView versionText=findViewById(R.id.versionText);
 

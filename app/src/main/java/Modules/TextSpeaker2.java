@@ -44,7 +44,7 @@ public class TextSpeaker2 implements TextToSpeech.OnInitListener {
             @Override
             public void run() {
                 try {
-                    Thread.sleep(3000);
+                    //Thread.sleep(3000);
                     float v = Paras.volume / 100f;
                     if (v < 0 || v > 1)
                         v = 1f;
@@ -59,6 +59,7 @@ public class TextSpeaker2 implements TextToSpeech.OnInitListener {
                         if (res == TextToSpeech.ERROR) {
                             stopTTS();
                             toSpeech=new TextToSpeech(Paras.appContext,TextSpeaker2.this);
+                            Thread.sleep(3000);
                             read(text);
                         }
                     } catch (Exception e) {

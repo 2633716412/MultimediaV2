@@ -50,7 +50,7 @@ import Modules.SPUnit;
 import Modules.TextSpeaker2;
 
 public class CmdManager {
-    static TextSpeaker2 textSpeaker2;
+    //static TextSpeaker2 textSpeaker2;
     static FileUnitDef fileUnitDef;
     static boolean firstShut=true;
 
@@ -131,12 +131,12 @@ public class CmdManager {
             }
         });
         thread.start();
-        try {
+        /*try {
             textSpeaker2 = new TextSpeaker2(Paras.appContext);
         } catch (Exception ex) {
             LogHelper.Error("初始化语音异常：" + ex);
             //Paras.msgManager.SendMsg("初始化语音异常：" + ex);
-        }
+        }*/
 
 
 
@@ -398,7 +398,7 @@ public class CmdManager {
                                                 String voiceTxt=" 请张三到中医科室就诊";
                                                 Paras.msgManager.SendMsg("开始呼叫：" + voiceTxt);
                                                 LogHelper.Debug("开始呼叫：" + voiceTxt);
-                                                textSpeaker2.read(voiceTxt);
+                                                Paras.textSpeaker2.read(voiceTxt);
                                                 break;
                                             case "1014":
                                                 String templateCode=contentObject.getString("templateCode");
@@ -408,7 +408,7 @@ public class CmdManager {
                                                 LogHelper.Debug("开始呼叫：" + voiceDate);
                                                 Paras.volume= Math.toIntExact(voiceVolume);
                                                 //textSpeaker2.setSpeed(voiceSpeed);
-                                                textSpeaker2.read(voiceDate);
+                                                Paras.textSpeaker2.read(voiceDate);
                                                 break;
                                             case "1015":
                                                 /*DevicePolicyManager devicePolicyManager = (DevicePolicyManager) Paras.appContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
@@ -448,7 +448,7 @@ public class CmdManager {
                                                 int streamType=contentObject.getInt("streamType");
                                                 deviceData.setStream_type(streamType);
                                                 spUnit.Set("DeviceData",deviceData);
-                                                textSpeaker2=new TextSpeaker2(Paras.appContext);
+                                                Paras.textSpeaker2=new TextSpeaker2(Paras.appContext);
                                                 LogHelper.Debug("语音类型调整为："+streamType);
                                                 break;
                                             case "1033":
