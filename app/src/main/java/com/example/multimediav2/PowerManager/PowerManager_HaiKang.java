@@ -36,7 +36,9 @@ public class PowerManager_HaiKang implements IPowerManager {
         this.context = context;
         InfoSystemApi.openAdb();
         InfoUtilApi.getRoot();
-
+        InfoSystemApi.setDeviceTestStatus(1);
+        LogHelper.Debug("系统测试状态："+InfoSystemApi.getDeviceTestStatus());
+        LogHelper.Debug("adb状态："+InfoSystemApi.getAdbStatus());
         osTimes = new ArrayList<>();
         for (int i = 1; i <= 7; i++) {
             osTimes.add(new OSTime(i, 0, 0, 23, 59));

@@ -277,7 +277,7 @@ public class BaseActivity extends Activity {
         }
         return null;
     }
-    private static void deleteFile(String path, String type) {
+    public static void deleteFile(String path, String type) {
         File file = new File(path);
         // 获取当前目录下的目录和文件
         File[] listFiles = file.listFiles();

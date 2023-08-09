@@ -3,7 +3,6 @@ package com.example.multimediav2.Models;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Build;
-import android.os.PowerManager;
 import android.os.SystemClock;
 import android.view.View;
 
@@ -14,6 +13,7 @@ import com.example.multimediav2.CacheServer.CacheServerFactory;
 import com.example.multimediav2.FileUnit.FileUnitDef;
 import com.example.multimediav2.HttpUnit.HttpUnitFactory;
 import com.example.multimediav2.PowerManager.PowerManagerFactory;
+import com.example.multimediav2.PowerManager.PowerManager_HKRK3128;
 import com.example.multimediav2.Utils.AudioUtil;
 import com.example.multimediav2.Utils.Base64FileUtil;
 import com.example.multimediav2.Utils.NetWorkUtils;
@@ -131,14 +131,6 @@ public class CmdManager {
             }
         });
         thread.start();
-        /*try {
-            textSpeaker2 = new TextSpeaker2(Paras.appContext);
-        } catch (Exception ex) {
-            LogHelper.Error("初始化语音异常：" + ex);
-            //Paras.msgManager.SendMsg("初始化语音异常：" + ex);
-        }*/
-
-
 
         //设置当前时间的同时，设置开关机时间
         Paras.powerManager.SetTime(deviceData.osTimes);
@@ -262,6 +254,9 @@ public class CmdManager {
                                                 } else if(Paras.DEVA40_XiPin.equals(Paras.devType)) {
                                                     picPath = BaseActivity.A40XiPinScreenShot();
                                                     base64Str = Base64FileUtil.encodeBase64File(picPath);
+                                                } else if(Paras.HAI_KANG_RK3128.equals(Paras.devType)) {
+                                                    picPath= PowerManager_HKRK3128.Screenshot();
+                                                    base64Str=Base64FileUtil.encodeBase64File(picPath);
                                                 } else {
                                                     picPath = BaseActivity.Screenshot();
                                                     base64Str = Base64FileUtil.encodeBase64File(picPath);
@@ -451,6 +446,14 @@ public class CmdManager {
                                                 Paras.textSpeaker2=new TextSpeaker2(Paras.appContext);
                                                 LogHelper.Debug("语音类型调整为："+streamType);
                                                 break;
+                                            case "1018":
+                                                String enable=contentObject.getString("enable");
+                                                int screenTime=contentObject.getInt("ShutScreenTime");
+                                                deviceData.setScreenEnable(enable);
+                                                deviceData.setScreenTime(screenTime);
+                                                spUnit.Set("DeviceData",deviceData);
+                                                LogHelper.Debug("是否开启自动截屏："+enable);
+                                                break;
                                             case "1033":
                                                 File logFile=new File(LogHelper.logFilePath);
                                                 FileWriter fileWriter=new FileWriter(logFile);
@@ -573,43 +576,49 @@ public class CmdManager {
                             Thread.sleep(5000);
                             SPUnit spUnit = new SPUnit(Paras.appContext);
                             DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
-                            LogHelper.Debug("截屏开始");
-                            String base64Str="";
-                            String picPath=Paras.appContext.getExternalFilesDir("nf").getPath();
-                            if(Paras.HAI_KANG.equals(Paras.devType)) {
-                                deleteFile(picPath,"jpg");
-                                View dView = BaseActivity.currActivity.getWindow().getDecorView();
-                                Bitmap bmp= InfoDisplayApi.screenShot(dView.getHeight(),dView.getWidth());
-                                ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                                bmp.compress(Bitmap.CompressFormat.JPEG, 80, stream);
-                                SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
-                                String fn = formatter.format(new Date()) + ".jpg";
-                                File fileSave = Paras.appContext.getExternalFilesDir("nf");
-                                String dir=fileSave.getPath();
-                                File file=new File(dir,fn);
-                                fileUnitDef.Save(dir, fn, stream.toByteArray());
-                                base64Str = Base64FileUtil.encodeBase64File(file.getPath());
-                                picPath+=fn;
-                            } else if(Paras.devType.equals(Paras.HAI_KANG_6055)) {
-                                picPath = BaseActivity.HK6055Screenshot();
-                                base64Str = Base64FileUtil.encodeBase64File(picPath);
-                            } else if(Paras.DEVA40_XiPin.equals(Paras.devType)) {
-                                picPath = BaseActivity.A40XiPinScreenShot();
-                                base64Str = Base64FileUtil.encodeBase64File(picPath);
-                            } else {
-                                picPath = BaseActivity.Screenshot();
-                                base64Str = Base64FileUtil.encodeBase64File(picPath);
+                            if(deviceData.getScreenEnable().equals("Y")) {
+                                LogHelper.Debug("截屏开始");
+                                String base64Str="";
+                                String picPath=Paras.appContext.getExternalFilesDir("nf").getPath();
+                                if(Paras.HAI_KANG.equals(Paras.devType)) {
+                                    deleteFile(picPath,"jpg");
+                                    View dView = BaseActivity.currActivity.getWindow().getDecorView();
+                                    Bitmap bmp=InfoDisplayApi.screenShot(dView.getHeight(),dView.getWidth());
+                                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                                    bmp.compress(Bitmap.CompressFormat.JPEG, 80, stream);
+                                    SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+                                    String fn = formatter.format(new Date()) + ".jpg";
+                                    File fileSave = context.getExternalFilesDir("nf");
+                                    String dir=fileSave.getPath();
+                                    File file=new File(dir,fn);
+                                    fileUnitDef.Save(dir, fn, stream.toByteArray());
+                                    base64Str = Base64FileUtil.encodeBase64File(file.getPath());
+                                    picPath+=fn;
+                                } else if(Paras.devType.equals(Paras.HAI_KANG_6055)) {
+                                    picPath = BaseActivity.HK6055Screenshot();
+                                    base64Str = Base64FileUtil.encodeBase64File(picPath);
+                                } else if(Paras.DEVA40_XiPin.equals(Paras.devType)) {
+                                    picPath = BaseActivity.A40XiPinScreenShot();
+                                    base64Str = Base64FileUtil.encodeBase64File(picPath);
+                                } else if(Paras.HAI_KANG_RK3128.equals(Paras.devType)) {
+                                    picPath= PowerManager_HKRK3128.Screenshot();
+                                    base64Str=Base64FileUtil.encodeBase64File(picPath);
+                                } else {
+                                    picPath = BaseActivity.Screenshot();
+                                    base64Str = Base64FileUtil.encodeBase64File(picPath);
+                                }
+                                JSONObject uploadObject=new JSONObject();
+                                uploadObject.put("device_id",deviceData.getId());
+                                uploadObject.put("fileFormat",".jpg");
+                                uploadObject.put("base64Str",base64Str);
+                                String res = HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/uploadFile",uploadObject.toString());
+                                JSONObject resObj= new JSONObject(res);
+                                if(!resObj.getBoolean("success")) {
+                                    LogHelper.Error("截屏失败：" + picPath);
+                                }
+                                LogHelper.Debug("截屏完成：" + picPath);
                             }
-                            JSONObject uploadObject=new JSONObject();
-                            uploadObject.put("device_id",deviceData.getId());
-                            uploadObject.put("fileFormat",".jpg");
-                            uploadObject.put("base64Str",base64Str);
-                            String res = HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/uploadFile",uploadObject.toString());
-                            JSONObject resObj= new JSONObject(res);
-                            if(!resObj.getBoolean("success")) {
-                                LogHelper.Error("截屏失败：" + picPath);
-                            }
-                            LogHelper.Debug("截屏完成：" + picPath);
+
                         } catch (Exception e) {
                             LogHelper.Error("截屏失败："+e.getMessage());
                         }
@@ -618,7 +627,7 @@ public class CmdManager {
             }
         });
         if(!Paras.hasRun[2]) {
-            pollingUtil.startPolling(shutThread,1800000,true);
+            pollingUtil.startPolling(shutThread,deviceData.getScreenTime()* 60000L,true);
             Paras.hasRun[2]=true;
         }
     }
@@ -666,17 +675,6 @@ public class CmdManager {
                 }
             }
         }
-    }
-    //判断是否在白名单
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    private boolean isIgnoringBatteryOptimizations() {
-        boolean isIgnoring = false;
-        PowerManager powerManager = (PowerManager) Paras.appContext.getSystemService(Context.POWER_SERVICE);
-        if (powerManager != null) {
-            isIgnoring = powerManager.isIgnoringBatteryOptimizations(Paras.appContext.getPackageName());
-        }
-        LogHelper.Debug("是否在白名单："+isIgnoring);
-        return isIgnoring;
     }
 
     public static String filterSpecialChars(String str) {

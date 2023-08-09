@@ -4,11 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DeviceData {
-    public Long id=0L;
+    public Long id = 0L;
 
-    public String sn="";
+    public String sn = "";
 
-    public Long orgId=0L;
+    public Long orgId = 0L;
 
     public String device_name = "";
 
@@ -16,18 +16,37 @@ public class DeviceData {
 
     public String device_ip = "";
 
-    public String api_ip="";
+    public String api_ip = "";
 
-    public String api_port="";
+    public String api_port = "";
 
-    public String mac="";
+    public String mac = "";
 
     public List<OSTime> osTimes = new ArrayList<>();
 
-    public int stream_type=-1;//叫号音频类型：-1媒体音频 0闹钟音频 1通知音频 2通话音频
+    public int stream_type = -1;//叫号音频类型：-1媒体音频 0闹钟音频 1通知音频 2通话音频
+    public String ScreenEnable = "N";
+
+    public int ScreenTime = 30;
 
     public int getStream_type() {
         return stream_type;
+    }
+
+    public String getScreenEnable() {
+        return ScreenEnable;
+    }
+
+    public void setScreenEnable(String screenEnable) {
+        ScreenEnable = screenEnable;
+    }
+
+    public int getScreenTime() {
+        return ScreenTime;
+    }
+
+    public void setScreenTime(int screenTime) {
+        ScreenTime = screenTime;
     }
 
     public void setStream_type(int stream_type) {

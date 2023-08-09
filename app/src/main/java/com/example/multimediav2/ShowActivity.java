@@ -2,10 +2,14 @@ package com.example.multimediav2;
 
 import android.annotation.SuppressLint;
 import android.app.ActionBar;
+import android.content.Context;
+import android.graphics.Point;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.Display;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -80,25 +84,48 @@ public class ShowActivity extends BaseActivity {
         LogHelper.Debug("版本："+NetWorkUtils.getVersionName(Paras.appContext)+"IP:"+deviceData.getDevice_ip());
         versionText.setText("IP:"+deviceData.getDevice_ip()+" 版本："+NetWorkUtils.getVersionName(Paras.appContext));
         webView1=findViewById(R.id.webView1);
+        webView1.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, android.webkit.WebResourceError error) {
+                // 当加载失败时，重复刷新页面
+                view.reload();
+            }
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                // 在这里处理链接的打开操作，可以使用 WebView 来加载链接
+                view.loadUrl(url);
+                return true; // 返回 true 表示已经处理了链接的打开操作
+            }
+        });
+        webView1.setWebChromeClient(new WebChromeClient());
         WebSettings webSetting1=webView1.getSettings();
         webSetting1.setJavaScriptEnabled(true);
         // 设置允许JS弹窗
         webSetting1.setJavaScriptCanOpenWindowsAutomatically(true);
         webSetting1.setMediaPlaybackRequiresUserGesture(false);
-        webSetting1.setCacheMode(WebSettings.LOAD_NO_CACHE);
-        webView1.setWebChromeClient(new WebChromeClient());
-
+        webSetting1.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
+        WindowManager windowManager = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+        Display display = windowManager.getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+        int screenWidth = size.x;
+        int screenHeight = size.y;
+        LogHelper.Debug("屏幕分辨率：宽"+screenWidth+"高"+screenHeight);
+        webView1.getSettings().setUseWideViewPort(true);
+        webView1.getSettings().setLoadWithOverviewMode(true);
         //webView1.setBackgroundColor(0); // 设置背景色
         webView2=findViewById(R.id.webView2);
-        webView2.setBackgroundColor(0); // 设置背景色
-        WebSettings webSetting2=webView2.getSettings();
-        webSetting2.setJavaScriptEnabled(true);
-        //webView2.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         webView2.setWebViewClient(new WebViewClient() {
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, android.webkit.WebResourceError error) {
                 // 当加载失败时，重复刷新页面
                 view.reload();
+            }
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                // 在这里处理链接的打开操作，可以使用 WebView 来加载链接
+                view.loadUrl(url);
+                return true; // 返回 true 表示已经处理了链接的打开操作
             }
         });
         webView2.setWebChromeClient(new WebChromeClient() {
@@ -111,6 +138,13 @@ public class ShowActivity extends BaseActivity {
                 view.reload();
             }
         });
+        webView2.setBackgroundColor(0); // 设置背景色
+        WebSettings webSetting2=webView2.getSettings();
+        webSetting2.setJavaScriptEnabled(true);
+        webView2.getSettings().setUseWideViewPort(true);
+        webView2.getSettings().setLoadWithOverviewMode(true);
+        //webView2.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        webSetting2.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         webSetting2.setJavaScriptCanOpenWindowsAutomatically(true);
         webSetting2.setLoadsImagesAutomatically(true);
         webSetting2.setDomStorageEnabled(true);
