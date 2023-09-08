@@ -126,6 +126,8 @@ public class PowerManagerA2040_XiPin extends BasePowerManager{
         }
 
         Paras.appContext.startActivity(intent);
+        //SilentInstallManager.silentInstallApk(Paras.appContext,path);
+
     }
 
     @Override
@@ -134,6 +136,12 @@ public class PowerManagerA2040_XiPin extends BasePowerManager{
         zcApi.getContext(Paras.appContext);
         zcApi.setStatusBar(false);
     }
+
+    @Override
+    public void StopUSB(boolean offOrOn) {
+
+    }
+
     @Override
     public boolean IsOpen()
     {
@@ -217,4 +225,5 @@ public class PowerManagerA2040_XiPin extends BasePowerManager{
         BaseActivity.currActivity.startActivityForResult(intent, 0);
 
     }
+
 }

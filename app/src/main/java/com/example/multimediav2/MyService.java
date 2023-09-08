@@ -12,35 +12,6 @@ import java.util.List;
 
 public class MyService extends Service {
 
-    /*private Handler mHandler = new Handler();
-    private Runnable mRunnable = new Runnable() {
-        @Override
-        public void run() {
-            Intent intent = new Intent(Paras.appContext, MainActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(intent);
-            *//*Intent i = getBaseContext().getPackageManager().getLaunchIntentForPackage(getBaseContext().getPackageName());
-            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            startActivity(i);*//*
-            stopSelf();
-        }
-    };
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        mHandler.postDelayed(mRunnable, 10000); // 10 秒后执行
-        return START_STICKY;
-    }
-    @Override
-    public void onDestroy() {
-        mHandler.removeCallbacks(mRunnable);
-        super.onDestroy();
-    }
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }*/
     private static final long INTERVAL = 10000; // 监测间隔时间，单位毫秒
     private static final String TARGET_APP_PACKAGE_NAME = "com.example.multimediav2"; // 目标app的包名
     private Handler handler;

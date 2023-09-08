@@ -113,7 +113,7 @@ public class PowerManagerA2040_XiPinBox extends BasePowerManager{
                 EDate nowDate = new EDate(now.Year(), now.Month(), now.Day(), osTime.open_hour, osTime.open_min, 0);
                 if(nowDate.date.getTime()>now.date.getTime()) {
                     secondOsTime=osTime;
-                    secondDay=now;
+                    //secondDay=now;
                     break;
                 }
                 int index=osTimes.indexOf(0);
@@ -150,10 +150,10 @@ public class PowerManagerA2040_XiPinBox extends BasePowerManager{
         LogHelper.Debug(msg);
         /*String yearStr =now.ToString();
         int year = Integer.parseInt(yearStr.substring(0,4));*/
-        Calendar calendar = Calendar.getInstance();
-        int year = calendar.get(Calendar.YEAR);
-        int []onTime={year,secondDay.Month(),secondDay.Day(),secondOsTime.open_hour,secondOsTime.open_min};
-        int []offTime={year,now.Month(),now.Day(),osTime.close_hour,osTime.close_min};
+        int begin_year = Integer.parseInt(begin.ToString().substring(0,4));
+        int end_year = Integer.parseInt(end.ToString().substring(0,4));
+        int []onTime={begin_year,secondDay.Month(),secondDay.Day(),secondOsTime.open_hour,secondOsTime.open_min};
+        int []offTime={end_year,now.Month(),now.Day(),osTime.close_hour,osTime.close_min};
         LogHelper.Debug("开机："+secondDay.Year()+"-"+secondDay.Month()+"-"+secondDay.Day()+" "+secondOsTime.open_hour+secondOsTime.open_min);
         LogHelper.Debug("关机："+now.Year()+"-"+now.Month()+"-"+now.Day()+" "+osTime.close_hour+osTime.close_min);
         zcApi.setPowetOnOffTime(true,onTime,offTime);
@@ -185,5 +185,10 @@ public class PowerManagerA2040_XiPinBox extends BasePowerManager{
     @Override
     public void StatusBar() {
         zcApi.setStatusBar(false);
+    }
+
+    @Override
+    public void StopUSB(boolean offOrOn) {
+
     }
 }

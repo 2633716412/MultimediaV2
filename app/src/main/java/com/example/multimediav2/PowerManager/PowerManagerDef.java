@@ -121,6 +121,11 @@ public class PowerManagerDef extends BasePowerManager {
 
     }
 
+    @Override
+    public void StopUSB(boolean offOrOn) {
+
+    }
+
     private PowerManager.WakeLock mWakeLock;
     synchronized private void getLock(Context context) {
         if (mWakeLock == null) {

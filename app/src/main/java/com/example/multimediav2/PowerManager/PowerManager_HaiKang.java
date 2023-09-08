@@ -19,10 +19,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import Modules.DeviceData;
 import Modules.EDate;
 import Modules.LogHelper;
 import Modules.OSTime;
 import Modules.Paras;
+import Modules.SPUnit;
 
 /***
  * 海康
@@ -32,10 +34,16 @@ public class PowerManager_HaiKang implements IPowerManager {
     private Context context;
     private List<OSTime> osTimes;
     boolean isOpen=true;
+    boolean offOrOn;
     public PowerManager_HaiKang(Context context) {
         this.context = context;
         InfoSystemApi.openAdb();
         InfoUtilApi.getRoot();
+        final SPUnit spUnit = new SPUnit(context);
+        final DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
+        offOrOn=deviceData.getStopUSB().equals("N");
+        InfoUtilApi.setUsbSwitch(offOrOn);
+
         InfoSystemApi.setDeviceTestStatus(1);
         LogHelper.Debug("系统测试状态："+InfoSystemApi.getDeviceTestStatus());
         LogHelper.Debug("adb状态："+InfoSystemApi.getAdbStatus());
@@ -79,6 +87,13 @@ public class PowerManager_HaiKang implements IPowerManager {
         } catch (InterruptedException e) {
             LogHelper.Error("StatusBar异常："+e);
         }*/
+    }
+
+    @Override
+    public void StopUSB(boolean offOrOn) {
+        LogHelper.Debug("海康屏usb口"+offOrOn);
+        int usbRes=InfoUtilApi.setUsbSwitch(offOrOn);
+        LogHelper.Debug("海康屏usb使能设置结果"+usbRes);
     }
 
     @Override

@@ -33,11 +33,15 @@ public class HttpUnit_Okhttp implements IHttpUnit {
     static public int TIMEOUT = 30;
 
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-
+    ConnectionPool connectionPool=new ConnectionPool(2, 5, TimeUnit.SECONDS);
     public String Get(String url, boolean usePeoxy) throws Exception {
+
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
+        /*if (BuildConfig.DEBUG) {
+            builder.addInterceptor(new OkHttpProfilerInterceptor());
+        }*/
         //短连接
-        builder.connectionPool(new ConnectionPool(5, 5, TimeUnit.SECONDS));
+        builder.connectionPool(connectionPool);
 
         builder.connectTimeout(TIMEOUT, TimeUnit.SECONDS)
                 .readTimeout(TIMEOUT, TimeUnit.SECONDS);
@@ -65,6 +69,7 @@ public class HttpUnit_Okhttp implements IHttpUnit {
             // Close the response body to release resources
             if (response != null) {
                 response.close();
+                //connectionPool.evictAll();
             }
         }
 
@@ -77,8 +82,11 @@ public class HttpUnit_Okhttp implements IHttpUnit {
 
     public String Post(String url, String json, boolean usePeoxy) throws IOException {
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
+        /*if (BuildConfig.DEBUG) {
+            builder.addInterceptor(new OkHttpProfilerInterceptor());
+        }*/
         //短连接
-        builder.connectionPool(new ConnectionPool(5, 5, TimeUnit.SECONDS));
+        builder.connectionPool(connectionPool);
         builder.connectTimeout(TIMEOUT, TimeUnit.SECONDS)
                 .readTimeout(TIMEOUT, TimeUnit.SECONDS);
 
@@ -125,7 +133,7 @@ public class HttpUnit_Okhttp implements IHttpUnit {
     public void DownLoad(String url, final String dir, final String fn, final Action<Long> OnDwonloading, final Action Downloaded, boolean usePeoxy) throws Exception {
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
         //短连接
-        builder.connectionPool(new ConnectionPool(5, 5, TimeUnit.SECONDS));
+        builder.connectionPool(connectionPool);
         builder.connectTimeout(TIMEOUT, TimeUnit.SECONDS);
 
         if (!StringUnit.isEmpty(proxyip) && port > 0 && usePeoxy) {
@@ -213,7 +221,7 @@ public class HttpUnit_Okhttp implements IHttpUnit {
 
             OkHttpClient.Builder builder = new OkHttpClient.Builder();
             //短连接
-            builder.connectionPool(new ConnectionPool(5, 5, TimeUnit.SECONDS));
+            builder.connectionPool(connectionPool);
             builder.connectTimeout(TIMEOUT, TimeUnit.SECONDS);
 
             if (!StringUnit.isEmpty(proxyip) && port > 0 && usePeoxy) {

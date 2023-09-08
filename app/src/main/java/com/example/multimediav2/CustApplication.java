@@ -34,7 +34,6 @@ public class CustApplication extends Application implements Thread.UncaughtExcep
     @Override
     public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
         LogHelper.Fatal(e.getMessage(), e);
-
         Intent intent = getPackageManager().getLaunchIntentForPackage(getPackageName());
         PendingIntent restartIntent = PendingIntent.getActivity(this, 0, intent, 0);
         AlarmManager mgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);

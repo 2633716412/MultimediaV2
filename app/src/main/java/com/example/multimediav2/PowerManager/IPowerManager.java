@@ -19,5 +19,6 @@ public interface IPowerManager {
     void setSystemTime(Context context);
     void Install(String path);
     void StatusBar();
+    void StopUSB(boolean offOrOn);
     String GetName();
 }

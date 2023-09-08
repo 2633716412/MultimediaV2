@@ -12,6 +12,7 @@ import com.ys.rkapi.MyManager;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -21,10 +22,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import Modules.DeviceData;
 import Modules.EDate;
 import Modules.LogHelper;
 import Modules.OSTime;
 import Modules.Paras;
+import Modules.SPUnit;
 
 public class PowerManager_HKRK3128 implements IPowerManager {
     private Context context;
@@ -32,11 +35,12 @@ public class PowerManager_HKRK3128 implements IPowerManager {
     volatile protected boolean opening = true;
     private static MyManager  mMyManager;
     static FileUnitDef fileUnitDef;
-
+    boolean offOrOn;
     public PowerManager_HKRK3128(Context context) {
         this.context = context;
         mMyManager = MyManager.getInstance(Paras.appContext);
         mMyManager.bindAIDLService(Paras.appContext);
+        mMyManager.daemon("com.nf.appmonitor",1);
         mMyManager.setADBOpen(true);
         mMyManager.setConnectClickInterface(new MyManager.ServiceConnectedInterface() {
             @Override
@@ -45,6 +49,10 @@ public class PowerManager_HKRK3128 implements IPowerManager {
                 //例如：mMyManager. getApiVersion();
             }
         });
+        final SPUnit spUnit = new SPUnit(context);
+        final DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
+        offOrOn=deviceData.getStopUSB().equals("N");
+        StopUSB(offOrOn);
         osTimes = new ArrayList<>();
         for (int i = 1; i <= 7; i++) {
             osTimes.add(new OSTime(i, 0, 0, 23, 59));
@@ -74,6 +82,46 @@ public class PowerManager_HKRK3128 implements IPowerManager {
     public void StatusBar() {
         mMyManager.setSlideShowNotificationBar(false);
         mMyManager.setSlideShowNavBar(false);
+    }
+
+    @Override
+    public void StopUSB(boolean offOrOn) {
+        LogHelper.Debug("海康屏usb口"+offOrOn);
+        try {
+            if(offOrOn) {
+                try {
+                    Process su = Runtime.getRuntime().exec("su");
+                    DataOutputStream localDataOutputStream1 = new DataOutputStream(su.getOutputStream());
+
+                    localDataOutputStream1.writeBytes("echo 1 > ./sys/devices/misc_power_en.19/host_vbus\n");
+                    localDataOutputStream1.writeBytes("exit\n");
+                    localDataOutputStream1.flush();
+                    su.waitFor();
+                    int ret1 = su.exitValue();
+                    LogHelper.Debug("开启usb结果"+ret1);
+                } catch (Exception var3) {
+                    LogHelper.Error("开启usb失败"+var3);
+                }
+            } else {
+                try {
+                    Process su = Runtime.getRuntime().exec("su");
+                    DataOutputStream localDataOutputStream1 = new DataOutputStream(su.getOutputStream());
+
+                    localDataOutputStream1.writeBytes("echo 0 > ./sys/devices/misc_power_en.19/host_vbus\n");
+                    localDataOutputStream1.writeBytes("exit\n");
+                    localDataOutputStream1.flush();
+                    su.waitFor();
+                    int ret1 = su.exitValue();
+                    LogHelper.Debug("禁用usb结果"+ret1);
+                } catch (Exception var3) {
+                    LogHelper.Error("禁用usb失败"+var3);
+                }
+            }
+        } catch (Exception e) {
+            LogHelper.Error("usb口禁用失败："+e);
+        }
+
+
     }
 
     @Override
@@ -268,7 +316,7 @@ public class PowerManager_HKRK3128 implements IPowerManager {
             EDate hh24 = new EDate(now.date.getYear(), now.date.getMonth(), now.date.getDate(), 23, 59, 59);
 
             if ((me >= hh00.date.getTime() && me <= e) || (me >= b && me <= hh24.date.getTime())) {
-                LogHelper.Debug("当前时间:" + now.ToString() + " 在范围：" + begin.ToString() + " 至 " + end.ToString());
+                //LogHelper.Debug("当前时间:" + now.ToString() + " 在范围：" + begin.ToString() + " 至 " + end.ToString());
                 return false;
             } else {
                 LogHelper.Debug("当前时间:" + now.ToString() + " 不在范围：" + begin.ToString() + " 至 " + end.ToString());
@@ -281,7 +329,7 @@ public class PowerManager_HKRK3128 implements IPowerManager {
             LogHelper.Debug("当前时间:" + now.ToString() + " 不在范围：" + begin.ToString() + " 至 " + end.ToString());
             return true;
         }
-        LogHelper.Debug("当前时间:" + now.ToString() + " 在范围：" + begin.ToString() + " 至 " + end.ToString());
+        //LogHelper.Debug("当前时间:" + now.ToString() + " 在范围：" + begin.ToString() + " 至 " + end.ToString());
         return false;
     }
 
@@ -305,7 +353,7 @@ public class PowerManager_HKRK3128 implements IPowerManager {
 
                 try {
                     Thread.sleep(SLEPP);
-                    LogHelper.Debug("开关机服务监听中...");
+                    //LogHelper.Debug("开关机服务监听中...");
                 } catch (Exception ex) {
                 }
             }

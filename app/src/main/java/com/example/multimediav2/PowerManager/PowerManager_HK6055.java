@@ -77,6 +77,34 @@ public class PowerManager_HK6055 implements IPowerManager{
     }
 
     @Override
+    public void StopUSB(boolean offOrOn) {
+        /*LogHelper.Debug("海康屏usb口"+offOrOn);
+        int usbRes1;
+        int usbRes2;
+        int usbRes3;
+        int usbRes4;
+        int usbRes5;
+        int usbRes6;
+        if(offOrOn) {
+            usbRes1=smdtManager.smdtSetUsbPower(1,1,1);
+            usbRes2=smdtManager.smdtSetUsbPower(1,2,1);
+            usbRes3=smdtManager.smdtSetUsbPower(1,3,1);
+            usbRes4=smdtManager.smdtSetUsbPower(2,1,1);
+            usbRes5=smdtManager.smdtSetUsbPower(2,2,1);
+            usbRes6=smdtManager.smdtSetUsbPower(2,3,1);
+        } else {
+            usbRes1=smdtManager.smdtSetUsbPower(1,1,0);
+            usbRes2=smdtManager.smdtSetUsbPower(1,2,0);
+            usbRes3=smdtManager.smdtSetUsbPower(1,3,0);
+            usbRes4=smdtManager.smdtSetUsbPower(2,1,0);
+            usbRes5=smdtManager.smdtSetUsbPower(2,2,0);
+            usbRes6=smdtManager.smdtSetUsbPower(2,3,0);
+        }
+
+        LogHelper.Debug("海康屏usb使能设置结果"+usbRes1+usbRes2+usbRes3+usbRes4+usbRes5+usbRes6);*/
+    }
+
+    @Override
     public boolean IsOpen() {
 
         if(smdtManager.smdtGetLcdLightStatus()==1) {

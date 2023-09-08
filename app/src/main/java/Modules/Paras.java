@@ -7,6 +7,8 @@ import com.example.multimediav2.CacheServer.ICacheServer;
 import com.example.multimediav2.PowerManager.IPowerManager;
 import com.example.multimediav2.VolumeManager.IVolumeManager;
 
+import java.util.Date;
+
 public class Paras {
 
     //<editor-fold desc="常量">
@@ -79,4 +81,5 @@ public class Paras {
     //底层url
     public static String underUrl="";
     public static boolean refresh=false;
+    public static Date programEndDate;
 }

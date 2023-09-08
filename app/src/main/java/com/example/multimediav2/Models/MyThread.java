@@ -183,6 +183,8 @@ public class MyThread extends Thread {
                                         Paras.msgManager.SendMsg("刷新节目");
                                         LogHelper.Debug("刷新节目");
                                         Paras.updateProgram=true;
+                                        Paras.underUrl="";
+                                        Paras.programUrl="";
                                         break;
                                     case "1010":
                                         LogHelper.Debug("设置开关机时间");

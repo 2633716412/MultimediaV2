@@ -103,7 +103,7 @@ public class MainActivity extends BaseActivity {
         dropList.add(dev5);
         ArrayAdapter<DropData> adapter = new ArrayAdapter<DropData>(MainActivity.this, android.R.layout.simple_spinner_item, dropList);
         device_type.setAdapter(adapter);
-
+        LogHelper.Debug("app开启");
         if(!Objects.equals(deviceData.getSn(), "")) {
             device_name=findViewById(R.id.device_name);
             inter1=findViewById(R.id.inter1);
@@ -209,6 +209,9 @@ public class MainActivity extends BaseActivity {
                 spUnit.Set("DeviceData",deviceData);
                 CmdManager iIniHanlder = new CmdManager();
                 iIniHanlder.Init(MainActivity.this, null);
+                Paras.updateProgram=true;
+                Paras.underUrl="";
+                Paras.programUrl="";
                 //startService(new Intent(this, AppService.class));
                 SkipTo(ShowActivity.class);
             }
@@ -305,6 +308,8 @@ public class MainActivity extends BaseActivity {
                     iIniHanlder.Init(MainActivity.this, null);
                     Paras.msgManager.SendMsg("修改配置完成");
                     Paras.updateProgram=true;
+                    Paras.underUrl="";
+                    Paras.programUrl="";
                     Paras.first=true;
                     SkipTo(ShowActivity.class);
                 } catch (Exception ex) {

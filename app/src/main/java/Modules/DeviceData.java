@@ -29,6 +29,16 @@ public class DeviceData {
 
     public int ScreenTime = 30;
 
+    public String StopUSB="N";
+
+    public String getStopUSB() {
+        return StopUSB;
+    }
+
+    public void setStopUSB(String stopUSB) {
+        StopUSB = stopUSB;
+    }
+
     public int getStream_type() {
         return stream_type;
     }

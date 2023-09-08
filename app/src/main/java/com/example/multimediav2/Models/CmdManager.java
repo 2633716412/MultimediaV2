@@ -18,13 +18,13 @@ import com.example.multimediav2.Utils.AudioUtil;
 import com.example.multimediav2.Utils.Base64FileUtil;
 import com.example.multimediav2.Utils.NetWorkUtils;
 import com.example.multimediav2.Utils.PollingUtil;
+import com.example.multimediav2.Utils.VideoUrlParser;
 import com.hikvision.dmb.display.InfoDisplayApi;
 
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
@@ -113,10 +113,11 @@ public class CmdManager {
                             JSONObject object= new JSONObject(jsonStr);
                             boolean res=object.getBoolean("success");
                             if(!res) {
-                                LogHelper.Error("保存失败"+object.getString("msg"));
+                                LogHelper.Error("保存失败:入参"+jsonObject+"出参："+jsonStr);
+                            } else {
+                                deviceData.setId(object.getLong("data"));
+                                spUnit.Set("DeviceData",deviceData);
                             }
-                            deviceData.setId(object.getLong("data"));
-                            spUnit.Set("DeviceData",deviceData);
                         }
                     } catch (Exception e) {
                         LogHelper.Error(e);
@@ -170,6 +171,8 @@ public class CmdManager {
                                             LogHelper.Error("更新心跳时间异常："+e);
                                             Paras.msgManager.SendMsg("网络连接异常");
                                             Paras.updateProgram=true;
+                                            Paras.underUrl="";
+                                            Paras.programUrl="";
                                         }
                                     }
 
@@ -258,7 +261,7 @@ public class CmdManager {
                                                     picPath= PowerManager_HKRK3128.Screenshot();
                                                     base64Str=Base64FileUtil.encodeBase64File(picPath);
                                                 } else {
-                                                    picPath = BaseActivity.Screenshot();
+                                                    picPath = BaseActivity.A40XiPinScreenShot();
                                                     base64Str = Base64FileUtil.encodeBase64File(picPath);
                                                 }
                                                 JSONObject uploadObject=new JSONObject();
@@ -406,16 +409,12 @@ public class CmdManager {
                                                 Paras.textSpeaker2.read(voiceDate);
                                                 break;
                                             case "1015":
-                                                /*DevicePolicyManager devicePolicyManager = (DevicePolicyManager) Paras.appContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
-                                                ComponentName adminReceiver= new ComponentName(Paras.appContext, MyBroadcastReceiver.class);
-                                                boolean admin = devicePolicyManager.isAdminActive(adminReceiver);
-                                                if (devicePolicyManager != null && admin) {
-                                                    devicePolicyManager.addUserRestriction(adminReceiver, UserManager.DISALLOW_USB_FILE_TRANSFER);
-                                                }*/
-                                                /*Intent intentOff = new Intent("android.hardware.usb.action.USB_STATE");
-                                                intentOff.putExtra("connected", false);
-                                                BaseActivity.currActivity.sendBroadcast(intentOff);*/
-                                                Process p = Runtime.getRuntime().exec("su");
+                                                String stopUSB=contentObject.getString("enable");
+                                                deviceData.setStopUSB(stopUSB);
+                                                spUnit.Set("DeviceData",deviceData);
+                                                boolean offOrOn=stopUSB.equals("N");
+                                                Paras.powerManager.StopUSB(offOrOn);
+                                                /*Process p = Runtime.getRuntime().exec("su");
                                                 DataOutputStream localDataOutputStream = new DataOutputStream(p.getOutputStream());
 
                                                 localDataOutputStream.writeBytes("echo 0 > /sys/class/android_usb/android0/enable\n");
@@ -423,12 +422,9 @@ public class CmdManager {
                                                 localDataOutputStream.flush();
                                                 p.waitFor();
                                                 int ret = p.exitValue();
-                                                LogHelper.Debug(ret + "");
+                                                LogHelper.Debug(ret + "");*/
                                                 break;
-                                            case "1016":
-                                                /*Intent intentOn = new Intent("android.hardware.usb.action.USB_STATE");
-                                                intentOn.putExtra("connected", true);
-                                                BaseActivity.currActivity.sendBroadcast(intentOn);*/
+                                            /*case "1016":
                                                 Process p1 = Runtime.getRuntime().exec("su");
                                                 DataOutputStream localDataOutputStream1 = new DataOutputStream(p1.getOutputStream());
 
@@ -438,7 +434,7 @@ public class CmdManager {
                                                 p1.waitFor();
                                                 int ret1 = p1.exitValue();
                                                 LogHelper.Debug(ret1 + "");
-                                                break;
+                                                break;*/
                                             case "1017":
                                                 int streamType=contentObject.getInt("streamType");
                                                 deviceData.setStream_type(streamType);
@@ -548,6 +544,8 @@ public class CmdManager {
                     if(!resultObj.getBoolean("success")) {
                         LogHelper.Error("日志提取失败：" + LogHelper.logFilePath);
                     }
+                    //删除缓存文件
+                    VideoUrlParser.deleteCacheFile();
                 } catch (Exception e) {
                     LogHelper.Error(e);
                 }
