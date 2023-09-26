@@ -170,8 +170,9 @@ public class PowerManager_HKRK3128 implements IPowerManager {
     }
 
     @Override
-    public void ShutDown() {
+    public void ShutDown(boolean checkScreen) {
         //息屏
+        opening=false;
         LogHelper.Debug("准备关机...");
         mMyManager.turnOffBackLight();
     }
@@ -179,12 +180,14 @@ public class PowerManager_HKRK3128 implements IPowerManager {
     @Override
     public void Open() {
         //亮屏
+        opening=true;
         LogHelper.Debug("准备开机...");
         mMyManager.turnOnBackLight();
     }
 
     @Override
     public void Reboot() {
+        opening=true;
         LogHelper.Debug("准备重启...");
         mMyManager.reboot();
     }
@@ -263,7 +266,7 @@ public class PowerManager_HKRK3128 implements IPowerManager {
                     opening = false;
                     LogHelper.Debug("预设时间已到，准备关机...");
                     Paras.msgManager.SendMsg("预设时间已到，准备关机...");
-                    ShutDown();
+                    ShutDown(false);
                 } catch (Exception ex) {
                     opening = temp;
                     LogHelper.Error(ex);

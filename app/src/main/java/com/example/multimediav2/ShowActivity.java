@@ -78,7 +78,12 @@ public class ShowActivity extends BaseActivity {
         decorView.setSystemUiVisibility(uiOptions);
         //隐藏状态栏时也可以把ActionBar也隐藏掉
         ActionBar actionBar = getActionBar();
-        Paras.powerManager.StatusBar();
+        try {
+            Paras.powerManager.StatusBar();
+        } catch (Exception e) {
+            LogHelper.Error("隐藏导航栏失败："+e.getMessage());
+        }
+
         //清除缓存
         //webView1.clearHistory();
         //webView2.clearHistory();
@@ -126,12 +131,12 @@ public class ShowActivity extends BaseActivity {
         webSetting1.setSupportMultipleWindows(true);
         webSetting1.setJavaScriptCanOpenWindowsAutomatically(true);
         webSetting1.setMediaPlaybackRequiresUserGesture(false);
-        webSetting1.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
+        webSetting1.setCacheMode(WebSettings.LOAD_NO_CACHE);
         //禁止缩放
         webSetting1.setBuiltInZoomControls(false);
         webSetting1.setSupportZoom(false);
         webSetting1.setLoadsImagesAutomatically(true);
-        webSetting1.setDomStorageEnabled(true);
+        //webSetting1.setDomStorageEnabled(true);
         //缓存
         /*webSetting2.setAppCacheEnabled(true);
         webSetting2.setCacheMode(WebSettings.LOAD_DEFAULT);*/
@@ -236,14 +241,7 @@ public class ShowActivity extends BaseActivity {
                             }
                             if(Paras.programEndDate!=null&&nowTime.getTime()>Paras.programEndDate.getTime()) {
                                 LogHelper.Debug("节目结束时间："+Paras.programEndDate);
-                                //清除浏览器缓存
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        webView1.loadUrl("about:blank");;
-                                        webView2.loadUrl("about:blank");;
-                                    }
-                                });
+
                                 Paras.underUrl="";
                                 Paras.programUrl="";
                                 Paras.updateProgram=true;
@@ -373,6 +371,13 @@ public class ShowActivity extends BaseActivity {
         Paras.underUrl="";
         Paras.programUrl="";
         Paras.updateProgram=true;
+        /*freshThead.interrupt();
+        keepFocusThread.interrupt();*/
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
         pollingUtil.endPolling(programThread);
         if(null != webView2) {
             webView2.clearCache(true);
@@ -389,10 +394,6 @@ public class ShowActivity extends BaseActivity {
         pollingUtil.endPolling(freshThead);
         pollingUtil.endPolling(keepFocusThread);
         Paras.handler.removeCallbacks(sendRunnable);
-
-
-        /*freshThead.interrupt();
-        keepFocusThread.interrupt();*/
     }
 
     public void GetProgramData(String sn) {
@@ -403,6 +404,20 @@ public class ShowActivity extends BaseActivity {
                 try {
                     if(NetWorkUtils.isNetworkAvailable(Paras.appContext)) {
                         jsonStr = HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getProgramData?sn=" + sn);
+
+                        /*//清除浏览器缓存
+                        webView1.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                webView1.clearCache(true);
+                            }
+                        });
+                        webView2.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                webView2.clearCache(true);
+                            }
+                        });*/
                     }
                 } catch (Exception e) {
                     LogHelper.Error("获取节目异常："+e);
@@ -466,6 +481,7 @@ public class ShowActivity extends BaseActivity {
                                         if(Paras.devType.equals(Paras.HAI_KANG)) {
                                             Paras.powerManager.StatusBar();
                                         }
+
                                         Paras.programUrl=url.toString();
                                         Paras.underUrl=wvUrl.toString();
                                     }
@@ -475,7 +491,7 @@ public class ShowActivity extends BaseActivity {
                                         Paras.powerManager.StatusBar();
                                     }*/
                                 } catch (Exception e) {
-                                    LogHelper.Error(e);
+                                    LogHelper.Error("更新url"+e.toString());
                                 }
 
                             }
@@ -485,7 +501,7 @@ public class ShowActivity extends BaseActivity {
             }
 
         } catch (Exception e) {
-            LogHelper.Error(e);
+            LogHelper.Error("GetProgramData"+e.toString());
         }
     }
 
@@ -533,7 +549,7 @@ public class ShowActivity extends BaseActivity {
     }
 
     private void Checkin(String cardNo) {
-        webView2.post(new Runnable() {
+        webView1.post(new Runnable() {
             @Override
             public void run() {
                 String ip = NetWorkUtils.GetIP(Paras.appContext);
@@ -551,7 +567,7 @@ public class ShowActivity extends BaseActivity {
                 try {
                     webView1.loadUrl("javascript:refresh(\"" + ip + "\")");
                 } catch (Exception e) {
-                    LogHelper.Error(e.toString());
+                    LogHelper.Error("refresh"+e.toString());
                 }
 
             }

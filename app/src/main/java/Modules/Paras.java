@@ -50,6 +50,7 @@ public class Paras {
 
     public static String androidNumber="";
 
+
     public static int volume = 100;
     //</editor-fold>
 
@@ -81,5 +82,5 @@ public class Paras {
     //底层url
     public static String underUrl="";
     public static boolean refresh=false;
-    public static Date programEndDate;
+    public static Date programEndDate=new Date();
 }

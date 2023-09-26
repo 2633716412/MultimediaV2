@@ -226,7 +226,17 @@ public class CmdManager {
                                             case "1003":
                                                 Paras.msgManager.SendMsg("正在准备关机...");
                                                 LogHelper.Debug("开始关机");
-                                                Paras.powerManager.ShutDown();
+                                                boolean checkScreen=false;
+                                                try {
+                                                    checkScreen = Objects.equals(contentObject.getString("checkScreen"), "Y");
+                                                } catch (Exception EE) {
+
+                                                }
+                                                if(Paras.devType.equals(Paras.DEVA20_XiPinBox)) {
+                                                    Paras.powerManager.ShutDown(checkScreen);
+                                                } else {
+                                                    Paras.powerManager.ShutDown(false);
+                                                }
                                                 break;
                                             case "1004":
                                                 Paras.msgManager.SendMsg("正在准备重启...");

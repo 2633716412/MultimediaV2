@@ -13,7 +13,7 @@ public interface IPowerManager {
     void SetTime(List<OSTime> osTimes);
     void StartListen();
     void StopListen();
-    void ShutDown();
+    void ShutDown(boolean checkScreen);
     void Open();
     void Reboot();
     void setSystemTime(Context context);

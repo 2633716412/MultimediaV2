@@ -56,7 +56,7 @@ abstract class BasePowerManager implements IPowerManager {
                     opening = false;
                     LogHelper.Debug("预设时间已到，准备关机...");
                     Paras.msgManager.SendMsg("预设时间已到，准备关机...");
-                    ShutDown();
+                    ShutDown(false);
                 } catch (Exception ex) {
                     opening = temp;
                     LogHelper.Error(ex);
@@ -68,7 +68,7 @@ abstract class BasePowerManager implements IPowerManager {
                     opening = true;
                     LogHelper.Debug("预设时间已到，准备开机...");
                     Paras.msgManager.SendMsg("预设时间已到，准备开机...");
-                    Open();
+                    Reboot();
                     releaseLock();
                 } catch (Exception ex) {
                     opening = temp;

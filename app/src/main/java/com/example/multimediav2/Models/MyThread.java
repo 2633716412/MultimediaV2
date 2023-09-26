@@ -87,7 +87,7 @@ public class MyThread extends Thread {
                                     case "1003":
                                         Paras.msgManager.SendMsg("正在准备关机...");
                                         LogHelper.Debug("开始关机");
-                                        Paras.powerManager.ShutDown();
+                                        Paras.powerManager.ShutDown(false);
                                         break;
                                     case "1004":
                                         Paras.msgManager.SendMsg("正在准备重启...");

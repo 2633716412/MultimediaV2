@@ -154,8 +154,9 @@ public class PowerManager_HK6055 implements IPowerManager{
 
 
     @Override
-    public void ShutDown() {
+    public void ShutDown(boolean checkScreen) {
         //息屏
+
         LogHelper.Debug("准备关机...");
         smdtManager.smdtSetLcdBackLight(0);
     }
@@ -169,7 +170,7 @@ public class PowerManager_HK6055 implements IPowerManager{
 
     @Override
     public void Reboot() {
-
+        LogHelper.Debug("准备重启...");
         smdtManager.smdtReboot("reboot");
     }
 
@@ -259,7 +260,7 @@ public class PowerManager_HK6055 implements IPowerManager{
                     opening = false;
                     LogHelper.Debug("预设时间已到，准备关机...");
                     Paras.msgManager.SendMsg("预设时间已到，准备关机...");
-                    ShutDown();
+                    ShutDown(false);
                 } catch (Exception ex) {
                     opening = temp;
                     LogHelper.Error(ex);

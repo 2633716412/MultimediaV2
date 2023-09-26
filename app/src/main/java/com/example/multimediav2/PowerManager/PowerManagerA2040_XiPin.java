@@ -56,7 +56,7 @@ public class PowerManagerA2040_XiPin extends BasePowerManager{
         }
     }*/
     @Override
-    public void ShutDown() {
+    public void ShutDown(boolean checkScreen) {
         isOpen=false;
         Intent intent = new Intent("com.zc.zclcdoff");
         context.sendBroadcast(intent);
@@ -84,7 +84,7 @@ public class PowerManagerA2040_XiPin extends BasePowerManager{
     public void Open() {
         isOpen=true;
         Paras.volume=100;
-        Intent intent = new Intent("wits.action.reboot");
+        Intent intent = new Intent("com.zc.zclcdon");
         context.sendBroadcast(intent);
 
     }

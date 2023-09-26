@@ -58,7 +58,7 @@ public class PowerManagerDef extends BasePowerManager {
     }*/
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
-    public void ShutDown() {
+    public void ShutDown(boolean checkScreen) {
 
         try {
             adminReceiver= new ComponentName(Paras.appContext, MyBroadcastReceiver.class);

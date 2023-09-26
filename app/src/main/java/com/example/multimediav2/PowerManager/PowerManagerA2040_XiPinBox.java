@@ -1,5 +1,7 @@
 package com.example.multimediav2.PowerManager;
 
+import static android.content.Context.POWER_SERVICE;
+
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -7,14 +9,14 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.PowerManager;
-import android.view.View;
 
 import androidx.core.content.FileProvider;
 
+import com.example.multimediav2.BaseActivity;
+import com.example.multimediav2.Models.MyBroadcastReceiver;
 import com.zcapi;
 
 import java.io.File;
-import java.util.Calendar;
 import java.util.List;
 
 import Modules.EDate;
@@ -26,6 +28,7 @@ public class PowerManagerA2040_XiPinBox extends BasePowerManager{
     private ComponentName adminReceiver;
     private PowerManager mPowerManager;
     private DevicePolicyManager policyManager;
+    private PowerManager.WakeLock wakeLock;
     zcapi zcApi=new zcapi();
     Context context;
     boolean isOpen=true;
@@ -33,26 +36,36 @@ public class PowerManagerA2040_XiPinBox extends BasePowerManager{
         this.context = context;
         zcApi.getContext(Paras.appContext);
         zcApi.setStatusBar(false);
+        adminReceiver= new ComponentName(Paras.appContext, MyBroadcastReceiver.class);
+        mPowerManager=(PowerManager) Paras.appContext.getSystemService(POWER_SERVICE);
+        policyManager=(DevicePolicyManager) Paras.appContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
+        boolean admin = policyManager.isAdminActive(adminReceiver);
+        if (!admin) {
+            checkAndTurnOnDeviceManager();
+        }
+
     }
 
     @Override
-    public void ShutDown() {
+    public void ShutDown(boolean checkScreen) {
         isOpen=false;
         /*Intent intent = new Intent("com.zc.zclcdoff");
         context.sendBroadcast(intent);*/
-        /*try {
-            adminReceiver= new ComponentName(Paras.appContext, MyBroadcastReceiver.class);
-            mPowerManager=(PowerManager) Paras.appContext.getSystemService(POWER_SERVICE);
-            policyManager=(DevicePolicyManager) Paras.appContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
+        if(checkScreen) {
+            try {
+                adminReceiver= new ComponentName(Paras.appContext, MyBroadcastReceiver.class);
+                mPowerManager=(PowerManager) Paras.appContext.getSystemService(POWER_SERVICE);
+                policyManager=(DevicePolicyManager) Paras.appContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
+                checkScreenOff();
 
-            checkScreenOff(null);
-
-            //Settings.System.putInt(Paras.appContext.getContentResolver(), "hdmi_enabled", 0);
-        } catch (Exception ex) {
-            LogHelper.Error(ex);
-        }*/
-        Intent intent = new Intent("wits.action.shutdown");
-        context.sendBroadcast(intent);
+                //Settings.System.putInt(Paras.appContext.getContentResolver(), "hdmi_enabled", 0);
+            } catch (Exception ex) {
+                LogHelper.Error("熄屏异常"+ex);
+            }
+        } else {
+            Intent intent = new Intent("wits.action.shutdown");
+            context.sendBroadcast(intent);
+        }
         //zcApi.setLcdOnOff(false,1);
     }
 
@@ -61,9 +74,16 @@ public class PowerManagerA2040_XiPinBox extends BasePowerManager{
         isOpen=true;
 //        Intent intent = new Intent("com.zc.zclcdon");
 //        context.sendBroadcast(intent);
-        Paras.volume=100;
+        /*Paras.volume=100;
         Intent intent = new Intent("wits.action.reboot");
-        context.sendBroadcast(intent);
+        context.sendBroadcast(intent);*/
+        try {
+            checkScreenOn();
+
+            //Settings.System.putInt(Paras.appContext.getContentResolver(), "hdmi_enabled", 0);
+        } catch (Exception ex) {
+            LogHelper.Error("亮屏异常"+ex);
+        }
 
     }
 
@@ -82,14 +102,30 @@ public class PowerManagerA2040_XiPinBox extends BasePowerManager{
     }
 
     /**
-     * @param view 熄屏
+     * 熄屏
      */
-    public void checkScreenOff(View view) {
+    public void checkScreenOff() {
         boolean admin = policyManager.isAdminActive(adminReceiver);
         if (admin) {
-            PowerManager.WakeLock wakeLock = mPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyApp::MyWakelockTag");
-            //wakeLock.acquire();
+            wakeLock = mPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyApp::MyWakelockTag");
+            wakeLock.acquire();
             policyManager.lockNow();
+            wakeLock.release();
+        } else {
+            LogHelper.Debug("没有设备管理权限");
+        }
+    }
+
+    /**
+     * 亮屏
+     */
+    public void checkScreenOn() {
+        boolean admin = policyManager.isAdminActive(adminReceiver);
+        if (admin) {
+            //PowerManager.WakeLock wakeLock = mPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyApp::MyWakelockTag");
+            wakeLock = mPowerManager.newWakeLock(PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP, "MyApp::MyWakelockTag2");
+            wakeLock.acquire();
+            wakeLock.release();
         } else {
             LogHelper.Debug("没有设备管理权限");
         }
@@ -189,6 +225,19 @@ public class PowerManagerA2040_XiPinBox extends BasePowerManager{
 
     @Override
     public void StopUSB(boolean offOrOn) {
+
+    }
+
+    /**
+     * 检测并去激活设备管理器权限
+     */
+    public void checkAndTurnOnDeviceManager() {
+        ComponentName adminReceiver= new ComponentName(Paras.appContext, MyBroadcastReceiver.class);;
+        Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
+        intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminReceiver);
+        intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "Enable USB blocking");
+        //intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "开启后就可以使用锁屏功能了...");//显示位置见图二
+        BaseActivity.currActivity.startActivityForResult(intent, 0);
 
     }
 }

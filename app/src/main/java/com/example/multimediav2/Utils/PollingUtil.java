@@ -34,7 +34,7 @@ public class PollingUtil {
             runnable.run();
         }
         Runnable task = (Runnable) mTaskMap.get(runnable);
-        if (task == null) {
+        if (task == null&&!mTaskMap.containsKey(runnable)) {
             task = new Runnable() {
                 @Override
                 public void run() {

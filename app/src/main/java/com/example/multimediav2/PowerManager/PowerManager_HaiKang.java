@@ -43,7 +43,13 @@ public class PowerManager_HaiKang implements IPowerManager {
         final DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
         offOrOn=deviceData.getStopUSB().equals("N");
         InfoUtilApi.setUsbSwitch(offOrOn);
-
+        //判断监控程序是否在白名单
+        boolean isInWhite=InfoUtilApi.isInWhiteList("com.nf.appmonitor");
+        LogHelper.Debug("监控程序是否在白名单"+isInWhite);
+        if (!isInWhite) {
+            int whiteRes=InfoUtilApi.addWhiteList("com.nf.appmonitor");
+            LogHelper.Debug("监控程序白名单添加结果"+whiteRes);
+        }
         InfoSystemApi.setDeviceTestStatus(1);
         LogHelper.Debug("系统测试状态："+InfoSystemApi.getDeviceTestStatus());
         LogHelper.Debug("adb状态："+InfoSystemApi.getAdbStatus());
@@ -154,7 +160,7 @@ public class PowerManager_HaiKang implements IPowerManager {
     }
 
     @Override
-    public void ShutDown() {
+    public void ShutDown(boolean checkScreen) {
         isOpen=false;
         //息屏
         InfoDisplayApi.disableBacklight();
