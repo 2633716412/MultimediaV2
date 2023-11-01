@@ -462,7 +462,7 @@ public class ShowActivity extends BaseActivity {
                     if(pageFinish>0) {
                         Paras.updateProgram=false;
                     }
-                    if(Paras.devType.equals(Paras.DEVA40_XiPin)) {
+                    if(Paras.devType.equals(Paras.DEVA40_XiPin)||Paras.devType.equals(Paras.HAI_KANG)) {
                         //清除浏览器缓存
                         webView1.post(new Runnable() {
                             @Override

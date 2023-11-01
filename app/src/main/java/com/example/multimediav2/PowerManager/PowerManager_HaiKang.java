@@ -204,7 +204,7 @@ public class PowerManager_HaiKang implements IPowerManager {
                         //String msg = "服务器时间=" + t1 + " 时间戳=" + serverTime.getTime() + " ，本地时间=" + t2;
                         String msg = "设置系统时间 当前服务器时间=" + t1 + " ，当前本地时间=" + t2;
                         LogHelper.Debug(msg);
-                        Paras.msgManager.SendMsg(msg);
+                        //Paras.msgManager.SendMsg(msg);
                         InfoTimeApi.setTime(serverTime.getTime());
                     } catch (Exception e) {
                         LogHelper.Error(e);
