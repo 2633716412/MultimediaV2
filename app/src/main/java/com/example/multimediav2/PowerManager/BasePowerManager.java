@@ -2,7 +2,6 @@ package com.example.multimediav2.PowerManager;
 
 import android.content.Context;
 import android.os.Build;
-import android.os.PowerManager;
 
 import com.example.multimediav2.HttpUnit.HttpUnitFactory;
 
@@ -11,7 +10,6 @@ import org.json.JSONObject;
 import java.io.DataOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -48,11 +46,11 @@ abstract class BasePowerManager implements IPowerManager {
     public void Handler() {
 
         boolean temp = opening;
-
+        LogHelper.Debug("开关机服务监听中..."+opening+InShutDwonTimeArea());
         if (opening) {
             if (InShutDwonTimeArea()) {
                 try {
-                    getLock(Paras.appContext);
+                    //getLock(Paras.appContext);
                     opening = false;
                     LogHelper.Debug("预设时间已到，准备关机...");
                     Paras.msgManager.SendMsg("预设时间已到，准备关机...");
@@ -69,7 +67,7 @@ abstract class BasePowerManager implements IPowerManager {
                     LogHelper.Debug("预设时间已到，准备开机...");
                     Paras.msgManager.SendMsg("预设时间已到，准备开机...");
                     Reboot();
-                    releaseLock();
+                    //releaseLock();
                 } catch (Exception ex) {
                     opening = temp;
                     LogHelper.Error(ex);
@@ -92,7 +90,11 @@ abstract class BasePowerManager implements IPowerManager {
 
         //未设置开关机策略，则什么都不做
         if (osTime == null)
+        {
+            LogHelper.Debug("当天时间未设置"+Objects.toString(osTimes));
             return false;
+        }
+
 
         EDate begin = new EDate(now.Year(), now.Month(), now.Day(), osTime.open_hour, osTime.open_min, 0);
         EDate end = new EDate(now.Year(), now.Month(), now.Day(), osTime.close_hour, osTime.close_min, 0);
@@ -102,18 +104,21 @@ abstract class BasePowerManager implements IPowerManager {
         long e = end.date.getTime();
 
         if (b == e)
+        {
+            LogHelper.Debug("当天开机时间和关机时间一致"+Objects.toString(osTimes));
             return false;
+        }
 
         if (b > e) {
             long me = now.date.getTime();
-            EDate hh00 = new EDate(now.date.getYear(), now.date.getMonth(), now.date.getDate(), 0, 0, 0);
-            EDate hh24 = new EDate(now.date.getYear(), now.date.getMonth(), now.date.getDate(), 23, 59, 59);
+            /*EDate hh00 = new EDate(now.date.getYear(), now.date.getMonth(), now.date.getDate(), 0, 0, 0);
+            EDate hh24 = new EDate(now.date.getYear(), now.date.getMonth(), now.date.getDate(), 23, 59, 59);*/
 
-            if ((me >= hh00.date.getTime() && me <= e) || (me >= b && me <= hh24.date.getTime())) {
-                LogHelper.Debug("当前时间:" + now.ToString() + " 在范围：" + begin.ToString() + " 至 " + end.ToString());
+            if ( me <= e || me >= b ) {
+                LogHelper.Debug("当前时间b > e:" + now.ToString() + " 在范围：" + begin.ToString() + " 至 " + end.ToString());
                 return false;
             } else {
-                LogHelper.Debug("当前时间:" + now.ToString() + " 不在范围：" + begin.ToString() + " 至 " + end.ToString());
+                LogHelper.Debug("当前时间b > e:" + now.ToString() + " 不在范围：" + begin.ToString() + " 至 " + end.ToString());
                 return true;
             }
         }
@@ -147,7 +152,7 @@ abstract class BasePowerManager implements IPowerManager {
 
                 try {
                     Thread.sleep(SLEPP);
-                    LogHelper.Debug("开关机服务监听中...");
+
                 } catch (Exception ex) {
                 }
             }
@@ -231,7 +236,7 @@ abstract class BasePowerManager implements IPowerManager {
         return "";
     }
 
-    private PowerManager.WakeLock mWakeLock;
+    /*private PowerManager.WakeLock mWakeLock;
     synchronized private void getLock(Context context) {
         if (mWakeLock == null) {
             PowerManager mgr = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
@@ -258,5 +263,5 @@ abstract class BasePowerManager implements IPowerManager {
 
             mWakeLock = null;
         }
-    }
+    }*/
 }

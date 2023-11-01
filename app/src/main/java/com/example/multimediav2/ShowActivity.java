@@ -12,6 +12,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -59,6 +60,7 @@ public class ShowActivity extends BaseActivity {
     public static KeepFocusThread keepFocusThread;
     private Thread programThread;
     //private Intent mServiceIntent;
+    private int pageFinish=0;
     private PollingUtil pollingUtil=new PollingUtil(Paras.handler);
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @SuppressLint("SetJavaScriptEnabled")
@@ -98,9 +100,14 @@ public class ShowActivity extends BaseActivity {
         //webView1.getSettings().setAppCacheEnabled(true); // 启用应用程序缓存
         webView1.setWebViewClient(new WebViewClient() {
             @Override
+            public void onPageFinished(WebView view, String url) {
+                pageFinish++;
+            }
+            @Override
             public void onReceivedError(WebView view, WebResourceRequest request, android.webkit.WebResourceError error) {
                 // 当加载失败时，重复刷新页面
-                view.reload();
+                //view.reload();
+                LogHelper.Error("WebViewClient.onReceivedError："+error.toString());
             }
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
@@ -108,11 +115,11 @@ public class ShowActivity extends BaseActivity {
                 view.loadUrl(url);
                 return true; // 返回 true 表示已经处理了链接的打开操作
             }
-            /*@Override
+            @Override
             public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse errorResponse) {
                 // 处理HTTP加载错误
-                view.reload();
-            }*/
+                LogHelper.Error("onReceivedHttpError");
+            }
         });
         webView1.setWebChromeClient(new WebChromeClient() {
             @Override
@@ -121,7 +128,8 @@ public class ShowActivity extends BaseActivity {
             }
             @Deprecated
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                view.reload();
+                LogHelper.Error("webView1.onReceivedError："+error.toString());
+                //view.reload();
             }
         });
         WebSettings webSetting1=webView1.getSettings();
@@ -131,12 +139,12 @@ public class ShowActivity extends BaseActivity {
         webSetting1.setSupportMultipleWindows(true);
         webSetting1.setJavaScriptCanOpenWindowsAutomatically(true);
         webSetting1.setMediaPlaybackRequiresUserGesture(false);
-        webSetting1.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        //webSetting1.setCacheMode(WebSettings.LOAD_NO_CACHE);
         //禁止缩放
         webSetting1.setBuiltInZoomControls(false);
         webSetting1.setSupportZoom(false);
         webSetting1.setLoadsImagesAutomatically(true);
-        //webSetting1.setDomStorageEnabled(true);
+        webSetting1.setDomStorageEnabled(true);
         //缓存
         /*webSetting2.setAppCacheEnabled(true);
         webSetting2.setCacheMode(WebSettings.LOAD_DEFAULT);*/
@@ -155,9 +163,15 @@ public class ShowActivity extends BaseActivity {
         webView1.getSettings().setUseWideViewPort(false);
         webView1.getSettings().setLoadWithOverviewMode(false);
         webView1.setInitialScale(100); // 100% 缩放级别
-        //webView1.setBackgroundColor(0); // 设置背景色
+
         webView2=findViewById(R.id.webView2);
+        webView1.setBackgroundColor(0);// 设置背景色
+        webView2.setBackgroundColor(0);
         webView2.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                pageFinish++;
+            }
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -173,18 +187,29 @@ public class ShowActivity extends BaseActivity {
                         VideoUrlParser.downloadVideo(request.getUrl().toString());
                         InputStream cachedVideoInputStream = VideoUrlParser.getCachedVideo(request.getUrl().toString());
                         if (cachedVideoInputStream != null) {
-                            return new WebResourceResponse("image/png", "UTF-8", cachedVideoInputStream);
+                            String pre=VideoUrlParser.getPhotoPre(request.getUrl().toString());
+                            if(pre.equals("png")) {
+                                return new WebResourceResponse("image/png", "UTF-8", cachedVideoInputStream);
+                            } else if(pre.equals("jpg")){
+                                return new WebResourceResponse("image/jpg", "UTF-8", cachedVideoInputStream);
+                            } else if(pre.equals("jpeg")){
+                                return new WebResourceResponse("image/jpeg", "UTF-8", cachedVideoInputStream);
+                            } else if(pre.equals("bmp")){
+                                return new WebResourceResponse("image/bmp", "UTF-8", cachedVideoInputStream);
+                            } else if(pre.equals("gif")){
+                                return new WebResourceResponse("image/gif", "UTF-8", cachedVideoInputStream);
+                            }
                         }
                     }
                 }
 
                 return super.shouldInterceptRequest(view, request);
             }
-            @Override
+            /*@Override
             public void onReceivedError(WebView view, WebResourceRequest request, android.webkit.WebResourceError error) {
                 // 当加载失败时，重复刷新页面
                 view.reload();
-            }
+            }*/
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 view.loadUrl(url);
@@ -198,16 +223,17 @@ public class ShowActivity extends BaseActivity {
             }
             @Deprecated
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                view.reload();
+                LogHelper.Error("webView2.onReceivedError："+error.toString());
+                //view.reload();
             }
         });
-        webView2.setBackgroundColor(0); // 设置背景色
+
         WebSettings webSetting2=webView2.getSettings();
         webSetting2.setJavaScriptEnabled(true);
         webView2.getSettings().setUseWideViewPort(true);
         webView2.getSettings().setLoadWithOverviewMode(true);
         //webView2.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-        webSetting2.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
+        //webSetting2.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         // 启用链接预览模式
         webSetting2.setSupportMultipleWindows(true);
         webSetting2.setJavaScriptCanOpenWindowsAutomatically(true);
@@ -237,7 +263,7 @@ public class ShowActivity extends BaseActivity {
                             Date nowTime=new Date();
                             if(Paras.updateProgram) {
                                 GetProgramData(deviceData.getSn());
-                                Paras.updateProgram=false;
+                                //Paras.updateProgram=false;
                             }
                             if(Paras.programEndDate!=null&&nowTime.getTime()>Paras.programEndDate.getTime()) {
                                 LogHelper.Debug("节目结束时间："+Paras.programEndDate);
@@ -289,8 +315,19 @@ public class ShowActivity extends BaseActivity {
             }
         });
         et_input = findViewById(R.id.et_input);
-        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(et_input.getWindowToken(), 0);
+
+        et_input.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                et_input.requestFocus();
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(et_input.getWindowToken(), 0);
+                boolean isKeyboardHidden = !imm.isAcceptingText();
+                if(isKeyboardHidden) {
+                    et_input.clearFocus();
+                }
+            }
+        }, 200); // 200毫秒延迟
         et_input.setOnEditorActionListener(new TextView.OnEditorActionListener() {
 
             Date last = new Date();
@@ -334,6 +371,7 @@ public class ShowActivity extends BaseActivity {
         keepFocusThread = new KeepFocusThread();
         pollingUtil.startPolling(keepFocusThread,500,false);
         Paras.handler.post(sendRunnable);
+        //webView2.addJavascriptInterface(new MyJavaScriptInterface(), "Android");
         /*keepFocusThread = new KeepFocusThread();
         freshThead.start();
         keepFocusThread.start();*/
@@ -347,6 +385,8 @@ public class ShowActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        Paras.updateProgram=true;
+        LogHelper.Debug("刷新");
         // 在 Activity 可见时开始执行刷新任务
         /*Paras.underUrl="";
         Paras.programUrl="";
@@ -378,15 +418,15 @@ public class ShowActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        Paras.underUrl="";
+        Paras.programUrl="";
         pollingUtil.endPolling(programThread);
         if(null != webView2) {
-            webView2.clearCache(true);
             webView2.setWebChromeClient(null);
             webView2.setWebViewClient(null);
             webView2.onPause();
         }
         if(null!=webView1) {
-            webView1.clearCache(true);
             webView1.setWebChromeClient(null);
             webView1.setWebViewClient(null);
             webView1.onPause();
@@ -394,18 +434,36 @@ public class ShowActivity extends BaseActivity {
         pollingUtil.endPolling(freshThead);
         pollingUtil.endPolling(keepFocusThread);
         Paras.handler.removeCallbacks(sendRunnable);
+
     }
 
     public void GetProgramData(String sn) {
         try {
-            boolean isStopped=false;
-            while (!isStopped) {
-                String jsonStr="";
-                try {
-                    if(NetWorkUtils.isNetworkAvailable(Paras.appContext)) {
-                        jsonStr = HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getProgramData?sn=" + sn);
+            String jsonStr="";
+            try {
+                if(NetWorkUtils.isNetworkAvailable(Paras.appContext)) {
+                    jsonStr = HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getProgramData?sn=" + sn);
 
-                        /*//清除浏览器缓存
+
+                } else {
+                    throw new Exception("NetWorkUtils网络异常");
+                }
+
+            } catch (Exception e) {
+                throw new Exception("获取节目异常："+e);
+            }
+            if(!Objects.equals(jsonStr, "")) {
+                JSONObject object = new JSONObject(jsonStr);
+                StringBuilder url = new StringBuilder(Paras.mulHtmlAddr);
+                StringBuilder wvUrl=new StringBuilder("");
+                JSONArray itemArray = object.getJSONArray("data");
+                final boolean[] first = {false};
+                if(object.getBoolean("success")) {
+                    if(pageFinish>0) {
+                        Paras.updateProgram=false;
+                    }
+                    if(Paras.devType.equals(Paras.DEVA40_XiPin)) {
+                        //清除浏览器缓存
                         webView1.post(new Runnable() {
                             @Override
                             public void run() {
@@ -417,86 +475,88 @@ public class ShowActivity extends BaseActivity {
                             public void run() {
                                 webView2.clearCache(true);
                             }
-                        });*/
+                        });
                     }
-                } catch (Exception e) {
-                    LogHelper.Error("获取节目异常："+e);
-                    continue;
-                }
-                if(!Objects.equals(jsonStr, "")) {
-                    isStopped=true;
-                    JSONObject object = new JSONObject(jsonStr);
-                    StringBuilder url = new StringBuilder(Paras.mulHtmlAddr);
-                    StringBuilder wvUrl=new StringBuilder("");
-                    JSONArray itemArray = object.getJSONArray("data");
-                    final boolean[] first = {false};
-                    if(object.getBoolean("success")) {
-
-                        for (int i = 0; i < itemArray.length(); i++) {
-                            JSONObject object1 = itemArray.getJSONObject(i);
-                            String repeatDay = object1.getString("repet_day");
-                            Long programId = object1.getLong("program_id");
-                            String underUrl=object1.getString("under_url");
-                            DateUtil dateUtil = new DateUtil();
-                            String nowWeek = String.valueOf(dateUtil.DayOfWeek());
-                            if (repeatDay.contains(nowWeek)) {
-                                JSONArray timeList = object1.getJSONArray("time_list");
-                                for (int j = 0; j < timeList.length(); j++) {
-                                    JSONObject timeObject = timeList.getJSONObject(j);
-                                    String startStr = timeObject.getString("begin_time");
-                                    String endStr = timeObject.getString("end_time");
-                                    DateUtil begin = DateUtil.GetByHourMin(startStr);
-                                    DateUtil end = DateUtil.GetByHourMin(endStr);
-                                    DateUtil now = DateUtil.Now();
-                                    if (now.Between(begin, end)&& !first[0]) {
-                                        List<String> timeStr= Arrays.asList(endStr.split(":"));
-                                        Calendar start = Calendar.getInstance();
-                                        int hour= Integer.parseInt(timeStr.get(0));
-                                        int minutes= Integer.parseInt(timeStr.get(1));
-                                        start.setTime(new Date());
-                                        start.set( Calendar.HOUR_OF_DAY,hour);
-                                        start.set( Calendar.MINUTE, minutes);
-                                        start.set( Calendar.SECOND,0);
-                                        Paras.programEndDate=start.getTime();
-                                        if(url.toString().contains("http://ip:port/app/index.html"))
-                                        {
-                                            Paras.updateProgram=true;
-                                        }
-                                        url.append("?id=").append(programId);
-                                        if(underUrl!=null&& !underUrl.equals("")) {
-                                            wvUrl.append(underUrl);
-                                        }
-                                        first[0] =true;
+                    //Paras.updateProgram=false;
+                    for (int i = 0; i < itemArray.length(); i++) {
+                        JSONObject object1 = itemArray.getJSONObject(i);
+                        String repeatDay = object1.getString("repet_day");
+                        Long programId = object1.getLong("program_id");
+                        String underUrl=object1.getString("under_url");
+                        DateUtil dateUtil = new DateUtil();
+                        String nowWeek = String.valueOf(dateUtil.DayOfWeek());
+                        if (repeatDay.contains(nowWeek)) {
+                            JSONArray timeList = object1.getJSONArray("time_list");
+                            for (int j = 0; j < timeList.length(); j++) {
+                                JSONObject timeObject = timeList.getJSONObject(j);
+                                String startStr = timeObject.getString("begin_time");
+                                String endStr = timeObject.getString("end_time");
+                                DateUtil begin = DateUtil.GetByHourMin(startStr);
+                                DateUtil end = DateUtil.GetByHourMin(endStr);
+                                DateUtil now = DateUtil.Now();
+                                if (now.Between(begin, end)&& !first[0]) {
+                                    List<String> timeStr= Arrays.asList(endStr.split(":"));
+                                    Calendar start = Calendar.getInstance();
+                                    int hour= Integer.parseInt(timeStr.get(0));
+                                    int minutes= Integer.parseInt(timeStr.get(1));
+                                    start.setTime(new Date());
+                                    start.set( Calendar.HOUR_OF_DAY,hour);
+                                    start.set( Calendar.MINUTE, minutes);
+                                    start.set( Calendar.SECOND,0);
+                                    Paras.programEndDate=start.getTime();
+                                    if(url.toString().contains("http://ip:port/app/index.html"))
+                                    {
+                                        Paras.updateProgram=true;
                                     }
+                                    url.append("?id=").append(programId);
+                                    if(underUrl!=null&& !underUrl.equals("")) {
+                                        wvUrl.append(underUrl);
+                                    }
+                                    first[0] =true;
+                                    ShowActivity.this.runOnUiThread(new Runnable() {
+                                        public void run() {
+                                            try {
+                                                if(Paras.devType.equals(Paras.DEVA40_XiPin)) {
+                                                    webView2.loadUrl(url.toString());
+                                                    webView2.requestFocus();
+                                                    webView1.loadUrl(wvUrl.toString());
+                                                    webView1.requestFocus();
+
+                                                    LogHelper.Debug("url："+url.toString());
+                                                    LogHelper.Debug("wvUrl："+wvUrl.toString());
+                                                } else {
+                                                    if(!url.toString().equals(Paras.programUrl)||!wvUrl.toString().equals(Paras.underUrl)) {
+                                                        webView2.loadUrl(url.toString());
+                                                        webView1.loadUrl(wvUrl.toString());
+                                                        if(Paras.devType.equals(Paras.HAI_KANG)) {
+                                                            Paras.powerManager.StatusBar();
+                                                        }
+                                                        LogHelper.Debug("url："+url.toString());
+                                                        LogHelper.Debug("wvUrl："+wvUrl.toString());
+                                                        Paras.programUrl=url.toString();
+                                                        Paras.underUrl=wvUrl.toString();
+                                                    }
+                                                        /*webView2.loadUrl(url.toString());
+                                                        webView1.loadUrl(wvUrl.toString());
+                                                        if(Paras.devType.equals(Paras.HAI_KANG)) {
+                                                            Paras.powerManager.StatusBar();
+                                                        }*/
+                                                }
+
+                                            } catch (Exception e) {
+                                                LogHelper.Error("更新url"+e.toString());
+                                            }
+
+                                        }
+                                    });
                                 }
                             }
                         }
-
-                        ShowActivity.this.runOnUiThread(new Runnable() {
-                            public void run() {
-                                try {
-                                    if(!url.toString().equals(Paras.programUrl)||!wvUrl.toString().equals(Paras.underUrl)) {
-                                        webView2.loadUrl(url.toString());
-                                        webView1.loadUrl(wvUrl.toString());
-                                        if(Paras.devType.equals(Paras.HAI_KANG)) {
-                                            Paras.powerManager.StatusBar();
-                                        }
-
-                                        Paras.programUrl=url.toString();
-                                        Paras.underUrl=wvUrl.toString();
-                                    }
-                                    /*webView2.loadUrl(url.toString());
-                                    webView1.loadUrl(wvUrl.toString());
-                                    if(Paras.devType.equals(Paras.HAI_KANG)) {
-                                        Paras.powerManager.StatusBar();
-                                    }*/
-                                } catch (Exception e) {
-                                    LogHelper.Error("更新url"+e.toString());
-                                }
-
-                            }
-                        });
                     }
+
+
+                } else if(object.getBoolean("success")) {
+                    LogHelper.Error("GetProgramData接口返回错误"+jsonStr);
                 }
             }
 
@@ -519,7 +579,7 @@ public class ShowActivity extends BaseActivity {
                         et_input.setFocusable(true);
                         et_input.setFocusableInTouchMode(true);
                         et_input.requestFocus();
-
+                        et_input.setVisibility(View.INVISIBLE);
                         //Log.e("KeepFocusThread", "requestFocus!!!");
 
                     }
@@ -554,7 +614,21 @@ public class ShowActivity extends BaseActivity {
             public void run() {
                 String ip = NetWorkUtils.GetIP(Paras.appContext);
                 LogHelper.Debug("checkin " + ip + " " + cardNo);
-                webView1.loadUrl("javascript:checkin(\"" + ip + "\"," + "\"" + cardNo + "\")");
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                    webView1.evaluateJavascript("javascript:checkin(\"" + ip + "\"," + "\"" + cardNo + "\")", new ValueCallback<String>() {
+                        @Override
+                        public void onReceiveValue(String result) {
+                            // result 包含 JavaScript 方法的返回值
+                            if (result != null) {
+                                // 处理 JavaScript 方法的返回值
+                                // result 是一个包含返回值的字符串
+                                // 在这里你可以根据返回值执行相应的操作
+                            }
+                        }
+                    });
+                } else  {
+                    webView1.loadUrl("javascript:checkin(\"" + ip + "\"," + "\"" + cardNo + "\")");
+                }
             }
         });
     }
@@ -565,7 +639,22 @@ public class ShowActivity extends BaseActivity {
             public void run() {
                 String ip = NetWorkUtils.GetIP(Paras.appContext);
                 try {
-                    webView1.loadUrl("javascript:refresh(\"" + ip + "\")");
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                        webView1.evaluateJavascript("javascript:refresh(\"" + ip + "\")", new ValueCallback<String>() {
+                            @Override
+                            public void onReceiveValue(String result) {
+                                // result 包含 JavaScript 方法的返回值
+                                if (result != null) {
+                                    // 处理 JavaScript 方法的返回值
+                                    // result 是一个包含返回值的字符串
+                                    // 在这里你可以根据返回值执行相应的操作
+                                }
+                            }
+                        });
+                    } else  {
+                        webView1.loadUrl("javascript:refresh(\"" + ip + "\")");
+                    }
                 } catch (Exception e) {
                     LogHelper.Error("refresh"+e.toString());
                 }
@@ -602,4 +691,20 @@ public class ShowActivity extends BaseActivity {
         //intent.setComponent(new ComponentName("com.example.appmonitor", "com.example.appmonitor.AppMonitorService"));
         sendBroadcast(intent);
     }
+    // JavaScript 接口类
+    /*public class MyJavaScriptInterface {
+        @JavascriptInterface
+        public void videoClick() {
+            // 在这里执行你的点击操作
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    LogHelper.Debug("调用videoClick");
+                    webView2.requestFocus();
+                    //点击方法
+                    //webView2.performClick(); // 调用webView的 performClick 方法
+                }
+            });
+        }
+    }*/
 }

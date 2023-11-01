@@ -31,12 +31,15 @@ import com.example.multimediav2.Models.DropData;
 import com.example.multimediav2.Models.MyAdapter;
 import com.example.multimediav2.Models.MyBroadcastReceiver;
 import com.example.multimediav2.Utils.NetWorkUtils;
+import com.example.multimediav2.Utils.VideoUrlParser;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.net.DatagramPacket;
 import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.net.MulticastSocket;
 import java.net.NetworkInterface;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -71,9 +74,11 @@ public class MainActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         //Paras.appContext=this;
         //Paras.msgManager=this;
         Paras.handler=new Handler();
+        //Paras.handler.post(sendZuRunnable);
         //mServiceIntent = new Intent(this, MyService.class);
         Paras.androidNumber= "Android"+ Build.VERSION.RELEASE;
         Paras.Wiidth = getResources().getDisplayMetrics().widthPixels;
@@ -212,6 +217,7 @@ public class MainActivity extends BaseActivity {
                 Paras.updateProgram=true;
                 Paras.underUrl="";
                 Paras.programUrl="";
+                VideoUrlParser.deleteCacheFile();
                 //startService(new Intent(this, AppService.class));
                 SkipTo(ShowActivity.class);
             }
@@ -679,6 +685,36 @@ public class MainActivity extends BaseActivity {
         intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "Enable USB blocking");
         //intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "开启后就可以使用锁屏功能了...");//显示位置见图二
         BaseActivity.currActivity.startActivityForResult(intent, 0);
+
+    }
+
+    private Runnable sendZuRunnable = new Runnable() {
+        @Override
+        public void run() {
+            sendTimeData(); // 发送时间数据的方法
+            Paras.handler.postDelayed(this, 3000); // 间隔2秒
+        }
+    };
+    public void sendTimeData() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    InetAddress group = InetAddress.getByName("255.255.255.255"); // 替换为实际的组播地址
+                    int port = 3333; // 替换为实际的端口
+
+                    MulticastSocket socket = new MulticastSocket();
+
+                    String message = "你的广播消息";
+                    byte[] data = message.getBytes();
+
+                    DatagramPacket packet = new DatagramPacket(data, data.length, group, port);
+                    socket.send(packet);
+                } catch (Exception e) {
+                    LogHelper.Error("组播发送异常："+e.toString());
+                }
+            }
+        }).start();
 
     }
 }

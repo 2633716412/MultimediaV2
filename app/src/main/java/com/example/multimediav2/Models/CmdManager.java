@@ -166,7 +166,7 @@ public class CmdManager {
                                         Paras.fail_num++;
                                     } else {
                                         Paras.fail_num++;
-                                        if(Paras.fail_num>=30) {
+                                        if(Paras.fail_num>=10) {
                                             Paras.fail_num=0;
                                             LogHelper.Error("更新心跳时间异常："+e);
                                             Paras.msgManager.SendMsg("网络连接异常");

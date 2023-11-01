@@ -147,4 +147,129 @@ public class NetWorkUtils {
         }
         return versionName;
     }
+
+    //备份
+    /*public void GetProgramData(String sn) {
+        try {
+            boolean isStopped=false;
+            while (!isStopped) {
+                String jsonStr="";
+                try {
+                    if(NetWorkUtils.isNetworkAvailable(Paras.appContext)) {
+                        jsonStr = HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getProgramData?sn=" + sn);
+                        if(Paras.devType.equals(Paras.DEVA40_XiPin)) {
+                            //清除浏览器缓存
+                            webView1.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    webView1.clearCache(true);
+                                }
+                            });
+                            webView2.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    webView2.clearCache(true);
+                                }
+                            });
+                        }
+
+                    } else {
+                        Paras.updateProgram=true;
+                        LogHelper.Error("NetWorkUtils网络异常");
+                    }
+
+                } catch (Exception e) {
+                    LogHelper.Error("获取节目异常："+e);
+                }
+                if(!Objects.equals(jsonStr, "")) {
+                    JSONObject object = new JSONObject(jsonStr);
+                    StringBuilder url = new StringBuilder(Paras.mulHtmlAddr);
+                    StringBuilder wvUrl=new StringBuilder("");
+                    JSONArray itemArray = object.getJSONArray("data");
+                    final boolean[] first = {false};
+                    if(object.getBoolean("success")) {
+                        isStopped=true;
+                        for (int i = 0; i < itemArray.length(); i++) {
+                            JSONObject object1 = itemArray.getJSONObject(i);
+                            String repeatDay = object1.getString("repet_day");
+                            Long programId = object1.getLong("program_id");
+                            String underUrl=object1.getString("under_url");
+                            DateUtil dateUtil = new DateUtil();
+                            String nowWeek = String.valueOf(dateUtil.DayOfWeek());
+                            if (repeatDay.contains(nowWeek)) {
+                                JSONArray timeList = object1.getJSONArray("time_list");
+                                for (int j = 0; j < timeList.length(); j++) {
+                                    JSONObject timeObject = timeList.getJSONObject(j);
+                                    String startStr = timeObject.getString("begin_time");
+                                    String endStr = timeObject.getString("end_time");
+                                    DateUtil begin = DateUtil.GetByHourMin(startStr);
+                                    DateUtil end = DateUtil.GetByHourMin(endStr);
+                                    DateUtil now = DateUtil.Now();
+                                    if (now.Between(begin, end)&& !first[0]) {
+                                        List<String> timeStr= Arrays.asList(endStr.split(":"));
+                                        Calendar start = Calendar.getInstance();
+                                        int hour= Integer.parseInt(timeStr.get(0));
+                                        int minutes= Integer.parseInt(timeStr.get(1));
+                                        start.setTime(new Date());
+                                        start.set( Calendar.HOUR_OF_DAY,hour);
+                                        start.set( Calendar.MINUTE, minutes);
+                                        start.set( Calendar.SECOND,0);
+                                        Paras.programEndDate=start.getTime();
+                                        if(url.toString().contains("http://ip:port/app/index.html"))
+                                        {
+                                            Paras.updateProgram=true;
+                                        }
+                                        url.append("?id=").append(programId);
+                                        if(underUrl!=null&& !underUrl.equals("")) {
+                                            wvUrl.append(underUrl);
+                                        }
+                                        first[0] =true;
+                                    }
+                                }
+                            }
+                        }
+
+                        ShowActivity.this.runOnUiThread(new Runnable() {
+                            public void run() {
+                                try {
+                                    if(Paras.devType.equals(Paras.DEVA40_XiPin)) {
+                                        webView2.loadUrl(url.toString());
+                                        webView1.loadUrl(wvUrl.toString());
+                                        LogHelper.Debug("url："+url.toString());
+                                        LogHelper.Debug("wvUrl："+wvUrl.toString());
+                                    } else {
+                                        if(!url.toString().equals(Paras.programUrl)||!wvUrl.toString().equals(Paras.underUrl)) {
+                                            webView2.loadUrl(url.toString());
+                                            webView1.loadUrl(wvUrl.toString());
+                                            if(Paras.devType.equals(Paras.HAI_KANG)) {
+                                                Paras.powerManager.StatusBar();
+                                            }
+                                            LogHelper.Debug("url："+url.toString());
+                                            LogHelper.Debug("wvUrl："+wvUrl.toString());
+                                            Paras.programUrl=url.toString();
+                                            Paras.underUrl=wvUrl.toString();
+                                        }
+                                    *//*webView2.loadUrl(url.toString());
+                                    webView1.loadUrl(wvUrl.toString());
+                                    if(Paras.devType.equals(Paras.HAI_KANG)) {
+                                        Paras.powerManager.StatusBar();
+                                    }*//*
+                                    }
+
+                                } catch (Exception e) {
+                                    LogHelper.Error("更新url"+e.toString());
+                                }
+
+                            }
+                        });
+                    } else if(object.getBoolean("success")) {
+                        LogHelper.Error("GetProgramData接口返回错误"+jsonStr);
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            LogHelper.Error("GetProgramData"+e.toString());
+        }
+    }*/
 }

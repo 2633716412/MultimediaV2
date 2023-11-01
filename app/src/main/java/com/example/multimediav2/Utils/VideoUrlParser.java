@@ -61,6 +61,14 @@ public class VideoUrlParser {
         return null;
     }
 
+    public static String getPhotoPre(String videoUrl) {
+        String pre="";
+
+        int indexEnd=videoUrl.lastIndexOf(".");
+        pre=videoUrl.substring(indexEnd+1);
+        return pre;
+    }
+
     public static void downloadVideo(String videoUrl) {
         int indexStart=videoUrl.lastIndexOf("/");
         String filename = videoUrl.substring(indexStart); // 生成唯一的文件名
