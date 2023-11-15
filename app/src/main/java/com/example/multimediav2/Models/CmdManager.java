@@ -581,7 +581,7 @@ public class CmdManager {
                     @Override
                     public void run() {
                         try {
-                            Thread.sleep(5000);
+                            //Thread.sleep(5000);
                             SPUnit spUnit = new SPUnit(Paras.appContext);
                             DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
                             if(deviceData.getScreenEnable().equals("Y")) {

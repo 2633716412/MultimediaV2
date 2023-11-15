@@ -10,6 +10,7 @@ import android.util.Log;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
@@ -272,4 +273,64 @@ public class NetWorkUtils {
             LogHelper.Error("GetProgramData"+e.toString());
         }
     }*/
+
+    public static InetAddress GetGBIp() {
+        String gbIp="";
+        try {
+            /*Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+            while (interfaces.hasMoreElements()) {
+                NetworkInterface networkInterface = interfaces.nextElement();
+
+                if (networkInterface.isLoopback() || !networkInterface.isUp()) {
+                    continue;
+                }
+
+                Enumeration<InetAddress> addresses = networkInterface.getInetAddresses();
+
+                while (addresses.hasMoreElements()) {
+                    InetAddress address = addresses.nextElement();
+
+                    if (address.isSiteLocalAddress()) {
+                        gbIp=address.getHostAddress();
+                        LogHelper.Debug("原地址"+gbIp);
+                    }
+                }
+            }*/
+            Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+            while (networkInterfaces.hasMoreElements()) {
+                NetworkInterface networkInterface = networkInterfaces.nextElement();
+                Enumeration<InetAddress> inetAddresses = networkInterface.getInetAddresses();
+                while (inetAddresses.hasMoreElements()) {
+                    InetAddress inetAddress = inetAddresses.nextElement();
+                    if (inetAddress.isLoopbackAddress()) {
+                        continue;
+                    }
+                    if (inetAddress instanceof java.net.Inet4Address) {
+                        gbIp=inetAddress.getHostAddress();
+                    } else if (inetAddress instanceof java.net.Inet6Address) {
+                        gbIp=inetAddress.getHostAddress();
+                    }
+                    return calculateBroadcastAddress(inetAddress);
+                }
+            }
+        } catch (Exception e) {
+            LogHelper.Error("GetLocalIp获取失败"+e.toString());
+        }
+        //gbIp=gbIp.substring(0,gbIp.lastIndexOf('.'));
+        //return gbIp+".255";//广播地址一般为当前局域网的最后一个
+        return null;
+    }
+
+    public static InetAddress calculateBroadcastAddress(InetAddress inetAddress) throws SocketException {
+        NetworkInterface networkInterface = NetworkInterface.getByInetAddress(inetAddress);
+        if (networkInterface != null) {
+            for (InterfaceAddress interfaceAddress : networkInterface.getInterfaceAddresses()) {
+                InetAddress broadcastAddress = interfaceAddress.getBroadcast();
+                if (broadcastAddress != null) {
+                    return broadcastAddress;
+                }
+            }
+        }
+        return null;
+    }
 }

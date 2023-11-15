@@ -4,9 +4,11 @@ import android.annotation.SuppressLint;
 import android.app.ActionBar;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Point;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.TypedValue;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.View;
@@ -22,6 +24,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
@@ -58,9 +61,11 @@ public class ShowActivity extends BaseActivity {
     private EditText et_input;
     private boolean waitDouble = true;
     public static KeepFocusThread keepFocusThread;
+    private SendRunnable sendRunnable;
     private Thread programThread;
     //private Intent mServiceIntent;
     private int pageFinish=0;
+    private int focusCount=0;
     private PollingUtil pollingUtil=new PollingUtil(Paras.handler);
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @SuppressLint("SetJavaScriptEnabled")
@@ -152,7 +157,7 @@ public class ShowActivity extends BaseActivity {
         webSetting1.setDatabaseEnabled(true);
         webSetting1.setAllowContentAccess(true);
         webSetting1.setAllowFileAccess(true);
-        webSetting1.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
+        webSetting1.setCacheMode(WebSettings.LOAD_NO_CACHE);
         WindowManager windowManager = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
         Display display = windowManager.getDefaultDisplay();
         Point size = new Point();
@@ -160,6 +165,14 @@ public class ShowActivity extends BaseActivity {
         int screenWidth = size.x;
         int screenHeight = size.y;
         LogHelper.Debug("屏幕分辨率：宽"+screenWidth+"高"+screenHeight);
+        if(screenWidth>0&&screenHeight>0) {
+            RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) webView1.getLayoutParams();
+            params.width = dip2px(this, screenWidth);
+            params.height = dip2px(this, screenHeight);
+            // params.setMargins(dip2px(MainActivity.this, 1), 0, 0, 0); // 可以实现设置位置信息，如居左距离，其它类推
+            // params.leftMargin = dip2px(MainActivity.this, 1);
+            webView1.setLayoutParams(params);
+        }
         webView1.getSettings().setUseWideViewPort(false);
         webView1.getSettings().setLoadWithOverviewMode(false);
         webView1.setInitialScale(100); // 100% 缩放级别
@@ -336,7 +349,7 @@ public class ShowActivity extends BaseActivity {
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
 
                 String text = v.getText().toString();
-
+                LogHelper.Debug("扫码值"+text);
                 if (StringUnit.isEmpty(text)) {
                     return true;
                 }
@@ -370,7 +383,8 @@ public class ShowActivity extends BaseActivity {
         pollingUtil.startPolling(freshThead,5000,false);
         keepFocusThread = new KeepFocusThread();
         pollingUtil.startPolling(keepFocusThread,500,false);
-        Paras.handler.post(sendRunnable);
+        sendRunnable=new SendRunnable();
+        pollingUtil.startPolling(sendRunnable,5000,false);
         //webView2.addJavascriptInterface(new MyJavaScriptInterface(), "Android");
         /*keepFocusThread = new KeepFocusThread();
         freshThead.start();
@@ -414,6 +428,18 @@ public class ShowActivity extends BaseActivity {
         /*freshThead.interrupt();
         keepFocusThread.interrupt();*/
     }
+    /**
+     * dp转为px
+     * @param context  上下文
+     * @param dipValue dp值
+     * @return
+     */
+    private int dip2px(Context context,float dipValue)
+    {
+        Resources r = context.getResources();
+        return (int) TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, dipValue, r.getDisplayMetrics());
+    }
 
     @Override
     protected void onDestroy() {
@@ -433,7 +459,7 @@ public class ShowActivity extends BaseActivity {
         }
         pollingUtil.endPolling(freshThead);
         pollingUtil.endPolling(keepFocusThread);
-        Paras.handler.removeCallbacks(sendRunnable);
+        pollingUtil.endPolling(sendRunnable);
 
     }
 
@@ -462,7 +488,7 @@ public class ShowActivity extends BaseActivity {
                     if(pageFinish>0) {
                         Paras.updateProgram=false;
                     }
-                    if(Paras.devType.equals(Paras.DEVA40_XiPin)||Paras.devType.equals(Paras.HAI_KANG)) {
+                    if(Paras.devType.equals(Paras.DEVA40_XiPin)) {
                         //清除浏览器缓存
                         webView1.post(new Runnable() {
                             @Override
@@ -474,6 +500,21 @@ public class ShowActivity extends BaseActivity {
                             @Override
                             public void run() {
                                 webView2.clearCache(true);
+                            }
+                        });
+                    }
+                    if(Paras.devType.equals(Paras.HAI_KANG)||Paras.devType.equals(Paras.HAI_KANG_RK3128)) {
+                        //重新加载
+                        webView1.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                webView1.reload();
+                            }
+                        });
+                        webView2.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                webView2.reload();
                             }
                         });
                     }
@@ -536,11 +577,6 @@ public class ShowActivity extends BaseActivity {
                                                         Paras.programUrl=url.toString();
                                                         Paras.underUrl=wvUrl.toString();
                                                     }
-                                                        /*webView2.loadUrl(url.toString());
-                                                        webView1.loadUrl(wvUrl.toString());
-                                                        if(Paras.devType.equals(Paras.HAI_KANG)) {
-                                                            Paras.powerManager.StatusBar();
-                                                        }*/
                                                 }
 
                                             } catch (Exception e) {
@@ -579,8 +615,13 @@ public class ShowActivity extends BaseActivity {
                         et_input.setFocusable(true);
                         et_input.setFocusableInTouchMode(true);
                         et_input.requestFocus();
-                        et_input.setVisibility(View.INVISIBLE);
-                        //Log.e("KeepFocusThread", "requestFocus!!!");
+                        focusCount++;
+                        //et_input.setVisibility(View.INVISIBLE);//影响输入数据
+                        if(focusCount>20) {
+                            LogHelper.Debug("KeepFocusThread", "requestFocus!!!");
+                            focusCount=0;
+                        }
+                        //LogHelper.Debug("KeepFocusThread", "requestFocus!!!");
 
                     }
                 }, 100);
@@ -675,11 +716,11 @@ public class ShowActivity extends BaseActivity {
         }
     }
 
-    private Runnable sendRunnable = new Runnable() {
+    private class SendRunnable extends Thread {
         @Override
         public void run() {
             sendTimeData(); // 发送时间数据的方法
-            Paras.handler.postDelayed(this, 10000); // 间隔60秒
+            //Paras.handler.postDelayed(this, 5000); // 间隔5秒
         }
     };
     public void sendTimeData() {

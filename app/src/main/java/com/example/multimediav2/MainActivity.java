@@ -4,6 +4,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -16,6 +17,7 @@ import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -37,9 +39,9 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.Inet4Address;
 import java.net.InetAddress;
-import java.net.MulticastSocket;
 import java.net.NetworkInterface;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -213,6 +215,11 @@ public class MainActivity extends BaseActivity {
                 deviceData.setSn(getUniquePsuedoID()+deviceData.getDevice_ip());
                 spUnit.Set("DeviceData",deviceData);
                 CmdManager iIniHanlder = new CmdManager();
+                //收起软键盘
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                if(this.getCurrentFocus()!=null) {
+                    imm.hideSoftInputFromWindow(this.getCurrentFocus().getWindowToken(), 0);
+                }
                 iIniHanlder.Init(MainActivity.this, null);
                 Paras.updateProgram=true;
                 Paras.underUrl="";
@@ -700,7 +707,8 @@ public class MainActivity extends BaseActivity {
             @Override
             public void run() {
                 try {
-                    InetAddress group = InetAddress.getByName("255.255.255.255"); // 替换为实际的组播地址
+                    /*String gbIp=NetWorkUtils.GetGBIp();
+                    InetAddress group = InetAddress.getByName(gbIp); // 替换为实际的组播地址
                     int port = 3333; // 替换为实际的端口
 
                     MulticastSocket socket = new MulticastSocket();
@@ -709,7 +717,16 @@ public class MainActivity extends BaseActivity {
                     byte[] data = message.getBytes();
 
                     DatagramPacket packet = new DatagramPacket(data, data.length, group, port);
+                    socket.send(packet);*/
+                    InetAddress gbIp=NetWorkUtils.GetGBIp();
+                    DatagramSocket socket = new DatagramSocket();
+                    socket.setBroadcast(true);
+                    String message = "你的广播消息";
+                    byte[] sendData = message.getBytes();
+                    DatagramPacket packet = new DatagramPacket(sendData, sendData.length, gbIp, 8888);
                     socket.send(packet);
+                    LogHelper.Error("发送广播成功");
+                    socket.close();
                 } catch (Exception e) {
                     LogHelper.Error("组播发送异常："+e.toString());
                 }
