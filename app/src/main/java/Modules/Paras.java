@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Handler;
 
 import com.example.multimediav2.CacheServer.ICacheServer;
+import com.example.multimediav2.Models.MyThread;
 import com.example.multimediav2.PowerManager.IPowerManager;
 import com.example.multimediav2.VolumeManager.IVolumeManager;
 
@@ -83,4 +84,5 @@ public class Paras {
     public static String underUrl="";
     public static boolean refresh=false;
     public static Date programEndDate=new Date();
+    public static MyThread heartThread;
 }

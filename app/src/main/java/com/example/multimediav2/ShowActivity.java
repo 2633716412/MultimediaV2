@@ -91,10 +91,6 @@ public class ShowActivity extends BaseActivity {
             LogHelper.Error("隐藏导航栏失败："+e.getMessage());
         }
 
-        //清除缓存
-        //webView1.clearHistory();
-        //webView2.clearHistory();
-
         //mServiceIntent = new Intent(this, MyService.class);
         SPUnit spUnit = new SPUnit(ShowActivity.this);
         DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
@@ -109,7 +105,7 @@ public class ShowActivity extends BaseActivity {
                 pageFinish++;
             }
             @Override
-            public void onReceivedError(WebView view, WebResourceRequest request, android.webkit.WebResourceError error) {
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 // 当加载失败时，重复刷新页面
                 //view.reload();
                 LogHelper.Error("WebViewClient.onReceivedError："+error.toString());
@@ -145,6 +141,10 @@ public class ShowActivity extends BaseActivity {
         webSetting1.setJavaScriptCanOpenWindowsAutomatically(true);
         webSetting1.setMediaPlaybackRequiresUserGesture(false);
         //webSetting1.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        //WebView的debug日志级别关闭
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            webView1.setWebContentsDebuggingEnabled(false);
+        }
         //禁止缩放
         webSetting1.setBuiltInZoomControls(false);
         webSetting1.setSupportZoom(false);
@@ -180,6 +180,9 @@ public class ShowActivity extends BaseActivity {
         webView2=findViewById(R.id.webView2);
         webView1.setBackgroundColor(0);// 设置背景色
         webView2.setBackgroundColor(0);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            webView2.setWebContentsDebuggingEnabled(false);
+        }
         webView2.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
@@ -287,9 +290,10 @@ public class ShowActivity extends BaseActivity {
                             }
                         }
                     }
-                }).start();
+                },"programChildThread").start();
             }
         });
+        programThread.setName("programThread");
         pollingUtil.startPolling(programThread,5 * 1000,false);
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -380,10 +384,13 @@ public class ShowActivity extends BaseActivity {
                 }
             }
         });
+        freshThead.setName("freshThread");
         pollingUtil.startPolling(freshThead,5000,false);
         keepFocusThread = new KeepFocusThread();
+        keepFocusThread.setName("keepFocusThread");
         pollingUtil.startPolling(keepFocusThread,500,false);
         sendRunnable=new SendRunnable();
+        sendRunnable.setName("sendRunnable");
         pollingUtil.startPolling(sendRunnable,5000,false);
         //webView2.addJavascriptInterface(new MyJavaScriptInterface(), "Android");
         /*keepFocusThread = new KeepFocusThread();
@@ -460,7 +467,7 @@ public class ShowActivity extends BaseActivity {
         pollingUtil.endPolling(freshThead);
         pollingUtil.endPolling(keepFocusThread);
         pollingUtil.endPolling(sendRunnable);
-
+        Paras.heartThread.IsStop();
     }
 
     public void GetProgramData(String sn) {
@@ -469,8 +476,6 @@ public class ShowActivity extends BaseActivity {
             try {
                 if(NetWorkUtils.isNetworkAvailable(Paras.appContext)) {
                     jsonStr = HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getProgramData?sn=" + sn);
-
-
                 } else {
                     throw new Exception("NetWorkUtils网络异常");
                 }

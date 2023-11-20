@@ -314,7 +314,7 @@ public class MainActivity extends BaseActivity {
                                 }
                             }
                         }
-                    }).start();
+                    },"getUrlSuffixThread").start();
                     data.setSn(getUniquePsuedoID()+data.getDevice_ip());
                     spUnit.Set("DeviceData",data);
                     CmdManager iIniHanlder = new CmdManager();
@@ -515,7 +515,7 @@ public class MainActivity extends BaseActivity {
 
                 }
             }
-        }).start();
+        },"getOrgThread").start();
 
         final Button btn_tts = findViewById(R.id.btu_tts);
         btn_tts.setOnClickListener(new View.OnClickListener() {

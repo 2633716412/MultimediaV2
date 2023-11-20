@@ -23,7 +23,7 @@ public class CustApplication extends Application implements Thread.UncaughtExcep
 
         Thread.setDefaultUncaughtExceptionHandler(this);
 
-        Paras.appContext = this;
+        Paras.appContext = this.getApplicationContext();
 
         Paras.Wiidth = getResources().getDisplayMetrics().widthPixels;
         Paras.Height = getResources().getDisplayMetrics().heightPixels;
