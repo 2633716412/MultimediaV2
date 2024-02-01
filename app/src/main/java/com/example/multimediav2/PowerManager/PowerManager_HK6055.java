@@ -8,11 +8,10 @@ import android.os.Build;
 
 import androidx.core.content.FileProvider;
 
-import com.example.multimediav2.Utils.PollingUtil;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import Modules.EDate;
 import Modules.LogHelper;
@@ -31,17 +30,13 @@ public class PowerManager_HK6055 implements IPowerManager{
         smdtManager = SmdtManager.create(context);
         //看门狗
         smdtManager.smdtWatchDogEnable((char) 1);
-        Thread dogThread=new Thread(new Runnable() {
+        Runnable dogThread=new Runnable() {
             @Override
             public void run() {
-                smdtManager.smdtWatchDogFeed ();
+                smdtManager.smdtWatchDogFeed();
             }
-        });
-        if(!Paras.hasRun[3]) {
-            PollingUtil pollingUtil=new PollingUtil(Paras.handler);
-            pollingUtil.startPolling(dogThread,1500,true);
-            Paras.hasRun[3]=true;
-        }
+        };
+        Paras.executor.scheduleAtFixedRate(dogThread,2,5, TimeUnit.SECONDS);
         //打开usb调试模式
         //smdtManager.setUSBDebug(true);
         //打开adb调试模式

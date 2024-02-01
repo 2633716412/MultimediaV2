@@ -91,7 +91,7 @@ public class MacUnit {
                 return loadFileAsString("/sys/class/net/eth0/address")
                         .toUpperCase().substring(0, 17);
             } catch (Exception e) {
-                e.printStackTrace();
+                LogHelper.Error("getMacAddress异常："+e.toString());
                 Log.e("----->" + "NetInfoManager",
                         "getMacAddress:" + e.toString());
             }
@@ -203,7 +203,7 @@ public class MacUnit {
             }
         } catch (SocketException e) {
 
-            e.printStackTrace();
+            LogHelper.Error("getLocalInetAddress异常："+e.toString());
         }
         return ip;
     }
@@ -227,7 +227,7 @@ public class MacUnit {
                 }
             }
         } catch (SocketException ex) {
-            ex.printStackTrace();
+            LogHelper.Error("getLocalInetAddress异常："+ex.toString());
         }
         return null;
     }
@@ -237,7 +237,7 @@ public class MacUnit {
         try {
             interfaces = NetworkInterface.getNetworkInterfaces();
         } catch (SocketException e) {
-            e.printStackTrace();
+            LogHelper.Error("getMachineHardwareAddress异常："+e.toString());
         }
         String hardWareAddress = null;
         NetworkInterface iF = null;
@@ -251,7 +251,7 @@ public class MacUnit {
                 if (hardWareAddress != null)
                     break;
             } catch (SocketException e) {
-                e.printStackTrace();
+                LogHelper.Error("getMachineHardwareAddress异常："+e.toString());
             }
         }
         return hardWareAddress;
@@ -310,7 +310,7 @@ public class MacUnit {
 
             result = line;
         } catch (Exception e) {
-            e.printStackTrace();
+            LogHelper.Error("callCmd异常："+e.toString());
         }
         return result;
     }

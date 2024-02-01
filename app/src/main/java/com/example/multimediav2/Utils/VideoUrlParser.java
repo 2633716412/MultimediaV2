@@ -69,7 +69,7 @@ public class VideoUrlParser {
         return pre;
     }
 
-    public static void downloadVideo(String videoUrl) {
+    public static String downloadVideo(String videoUrl,int size) {
         int indexStart=videoUrl.lastIndexOf("/");
         String filename = videoUrl.substring(indexStart); // 生成唯一的文件名
         String fn=Paras.appContext.getExternalFilesDir("/nf/cache").getPath();
@@ -79,12 +79,11 @@ public class VideoUrlParser {
 
             if (re == false) {
                 LogHelper.Debug("创建目录失败 " + fn);
-                return;
             }
         }
         File file=new File(fn,filename);
         //LogHelper.Debug("文件缓存地址："+file.getPath());
-        if(!file.exists()) {
+        if(!file.exists() || file.length() < size) {
             try {
                // LogHelper.Debug("开始缓存");
                 HttpUnitFactory.Get().DownLoad(videoUrl, fn, filename, null,null);
@@ -92,7 +91,7 @@ public class VideoUrlParser {
                 LogHelper.Error("文件缓存异常："+e);
             }
         }
-
+        return filename;
     }
 
     public static boolean isPictureResource(String url) {

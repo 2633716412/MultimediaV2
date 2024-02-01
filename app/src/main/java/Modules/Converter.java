@@ -63,15 +63,14 @@ public class Converter {
             in.read(filecontent);
             in.close();
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            LogHelper.Error("readToString1异常："+e.toString());
         } catch (IOException e) {
-            e.printStackTrace();
+            LogHelper.Error("readToString2异常："+e.toString());
         }
         try {
             return new String(filecontent, encoding);
         } catch (UnsupportedEncodingException e) {
-            System.err.println("The OS does not support " + encoding);
-            e.printStackTrace();
+            LogHelper.Error("readToString3异常："+e.toString());
             return null;
         }
     }
@@ -112,13 +111,13 @@ public class Converter {
             }
             data = swapStream.toByteArray();
         } catch (IOException e) {
-            e.printStackTrace();
+            LogHelper.Error("getBase64FromInputStream1异常："+e.toString());
         } finally {
             if (in != null) {
                 try {
                     in.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    LogHelper.Error("getBase64FromInputStream2异常："+e.toString());
                 }
             }
         }

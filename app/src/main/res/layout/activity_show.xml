@@ -11,23 +11,25 @@
         tools:ignore="MissingConstraints">
         <RelativeLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-            <com.example.multimediav2.Models.MyWebView
+            android:layout_height="wrap_content"
+            tools:ignore="WebViewLayout">
+            <WebView
                 android:id="@+id/webView1"
                 android:layout_width="match_parent"
                 android:layout_marginTop="1dp"
                 android:layout_height="match_parent">
-            </com.example.multimediav2.Models.MyWebView>
+            </WebView>
         </RelativeLayout>
         <RelativeLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-            <com.example.multimediav2.Models.MyWebView
+            android:layout_height="wrap_content"
+            tools:ignore="WebViewLayout">
+            <WebView
                 android:id="@+id/webView2"
                 android:layout_width="match_parent"
                 android:layout_marginTop="1dp"
                 android:layout_height="match_parent" >
-            </com.example.multimediav2.Models.MyWebView>
+            </WebView>
             <TextView
                 android:layout_alignParentLeft="true"
                 android:layout_alignParentBottom="true"

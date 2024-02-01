@@ -84,7 +84,7 @@ public class FileUnitRoot extends FileUnitDef {
         try {
             bool = new File("/system/bin/su").exists() || new File("/system/xbin/su").exists();
         } catch (Exception e) {
-            e.printStackTrace();
+            LogHelper.Error("isRoot异常："+e.toString());
         }
         return bool;
     }

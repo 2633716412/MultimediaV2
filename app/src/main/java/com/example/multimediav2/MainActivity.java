@@ -12,7 +12,6 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -28,18 +27,13 @@ import android.widget.TextView;
 import androidx.annotation.RequiresApi;
 
 import com.example.multimediav2.HttpUnit.HttpUnitFactory;
-import com.example.multimediav2.Models.CmdManager;
 import com.example.multimediav2.Models.DropData;
 import com.example.multimediav2.Models.MyAdapter;
 import com.example.multimediav2.Models.MyBroadcastReceiver;
-import com.example.multimediav2.Utils.NetWorkUtils;
-import com.example.multimediav2.Utils.VideoUrlParser;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -70,23 +64,17 @@ public class MainActivity extends BaseActivity {
     private Button btu_save;
     private TextView switch_text;
     private Spinner spinner;
-    private Intent mServiceIntent;
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        //Paras.appContext=this;
-        //Paras.msgManager=this;
-        Paras.handler=new Handler();
-        //Paras.handler.post(sendZuRunnable);
         //mServiceIntent = new Intent(this, MyService.class);
         Paras.androidNumber= "Android"+ Build.VERSION.RELEASE;
         Paras.Wiidth = getResources().getDisplayMetrics().widthPixels;
         Paras.Height = getResources().getDisplayMetrics().heightPixels;
         checkPermission();
-        SPUnit spUnit = new SPUnit(MainActivity.this);
+        SPUnit spUnit = new SPUnit(Paras.appContext);
         DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
         device_type=findViewById(R.id.device_type);
         switch_text=findViewById(R.id.switch_text);
@@ -108,6 +96,7 @@ public class MainActivity extends BaseActivity {
         dropList.add(dev4);
         DropData dev5=new DropData("hk_rk3128","HAI_KANG_RK3128");
         dropList.add(dev5);
+
         ArrayAdapter<DropData> adapter = new ArrayAdapter<DropData>(MainActivity.this, android.R.layout.simple_spinner_item, dropList);
         device_type.setAdapter(adapter);
         LogHelper.Debug("app开启");
@@ -139,7 +128,6 @@ public class MainActivity extends BaseActivity {
                 }
                 switch_text.setText(timeStr);
             }
-
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -151,20 +139,17 @@ public class MainActivity extends BaseActivity {
                         String urlSuffix="";
                         if(!Objects.equals(deviceData.getApi_ip(), "")) {
                             try {
-                                if(NetWorkUtils.isNetworkAvailable(Paras.appContext)) {
-                                    String result= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getUrlSuffix");
-                                    if(!Objects.equals(result, "")) {
-                                        JSONObject object = new JSONObject(result);
-                                        urlSuffix = object.getString("data");
-                                        Paras.mulHtmlAddr=GetUrl(Paras.mulHtmlAddr,deviceData.getApi_ip(),deviceData.getApi_port(),urlSuffix);
-                                        isStopped=true;
-                                    }
+                                String result= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getUrlSuffix");
+                                if(!Objects.equals(result, "")) {
+                                    JSONObject object = new JSONObject(result);
+                                    urlSuffix = object.getString("data");
+                                    isStopped=true;
                                 }
                             } catch (Exception e) {
                                 LogHelper.Error("获取节目地址异常："+e);
                             }
                         }
-
+                        Paras.mulHtmlAddr=GetUrl(Paras.mulHtmlAddr,deviceData.getApi_ip(),deviceData.getApi_port(),urlSuffix);
                         try {
                             Thread.sleep(5000);
                         } catch (Exception e) {
@@ -173,7 +158,6 @@ public class MainActivity extends BaseActivity {
                     }
                 }
             }).start();
-
             device_name.setText(deviceData.getDevice_name());
             if(!Objects.equals(deviceData.getApi_ip(), "")) {
                 List<String> inters= Arrays.asList(deviceData.getApi_ip().split("\\."));
@@ -214,17 +198,12 @@ public class MainActivity extends BaseActivity {
             if (Paras.first) {
                 deviceData.setSn(getUniquePsuedoID()+deviceData.getDevice_ip());
                 spUnit.Set("DeviceData",deviceData);
-                CmdManager iIniHanlder = new CmdManager();
-                //收起软键盘
-                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                if(this.getCurrentFocus()!=null) {
-                    imm.hideSoftInputFromWindow(this.getCurrentFocus().getWindowToken(), 0);
-                }
-                iIniHanlder.Init(MainActivity.this, null);
+                //跳转节目页时禁用软键盘
+                StopInputMethod();
                 Paras.updateProgram=true;
                 Paras.underUrl="";
                 Paras.programUrl="";
-                VideoUrlParser.deleteCacheFile();
+                //VideoUrlParser.deleteCacheFile();
                 //startService(new Intent(this, AppService.class));
                 SkipTo(ShowActivity.class);
             }
@@ -243,7 +222,7 @@ public class MainActivity extends BaseActivity {
                     inter4=findViewById(R.id.inter4);
                     port=findViewById(R.id.port);
                     device_type=findViewById(R.id.device_type);
-                    SPUnit spUnit = new SPUnit(MainActivity.this);
+                    SPUnit spUnit = new SPUnit(Paras.appContext);
                     DeviceData data=spUnit.Get("DeviceData", DeviceData.class);
                     //获取本地ip
                     WifiManager wifiManager = (WifiManager) Paras.appContext.getSystemService(Paras.appContext.WIFI_SERVICE);
@@ -282,6 +261,12 @@ public class MainActivity extends BaseActivity {
                     /*if(data.getDevice_type().equals(Paras.DEVA20_XiPinBox)) {
                         checkAndTurnOnDeviceManager(null);
                     }*/
+                    // 检查线程池是否已经终止
+                    /*if (Paras.executor.isTerminated()) {
+                        // 创建一个新的线程池
+                        Paras.executor = Executors.newScheduledThreadPool(10);
+                    }
+                    Paras.executor.execute(suffixTask);*/
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
@@ -293,20 +278,17 @@ public class MainActivity extends BaseActivity {
                                 String urlSuffix="";
                                 if(!Objects.equals(deviceData.getApi_ip(), "")) {
                                     try {
-                                        if(NetWorkUtils.isNetworkAvailable(Paras.appContext)) {
-                                            String result= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getUrlSuffix");
-                                            if(!Objects.equals(result, "")) {
-                                                JSONObject object = new JSONObject(result);
-                                                urlSuffix = object.getString("data");
-                                                Paras.mulHtmlAddr=GetUrl(Paras.mulHtmlAddr,deviceData.getApi_ip(),deviceData.getApi_port(),urlSuffix);
-                                                isStopped=true;
-                                            }
+                                        String result= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getUrlSuffix");
+                                        if(!Objects.equals(result, "")) {
+                                            JSONObject object = new JSONObject(result);
+                                            urlSuffix = object.getString("data");
+                                            isStopped=true;
                                         }
                                     } catch (Exception e) {
                                         LogHelper.Error("获取节目地址异常："+e);
                                     }
                                 }
-
+                                Paras.mulHtmlAddr=GetUrl(Paras.mulHtmlAddr,deviceData.getApi_ip(),deviceData.getApi_port(),urlSuffix);
                                 try {
                                     Thread.sleep(5000);
                                 } catch (Exception e) {
@@ -314,11 +296,9 @@ public class MainActivity extends BaseActivity {
                                 }
                             }
                         }
-                    },"getUrlSuffixThread").start();
+                    }).start();
                     data.setSn(getUniquePsuedoID()+data.getDevice_ip());
                     spUnit.Set("DeviceData",data);
-                    CmdManager iIniHanlder = new CmdManager();
-                    iIniHanlder.Init(MainActivity.this, null);
                     Paras.msgManager.SendMsg("修改配置完成");
                     Paras.updateProgram=true;
                     Paras.underUrl="";
@@ -413,8 +393,6 @@ public class MainActivity extends BaseActivity {
                 }
             }
         });
-
-        //获取机构下拉
 
         new Thread(new Runnable() {
             @RequiresApi(api = Build.VERSION_CODES.N)
@@ -515,7 +493,7 @@ public class MainActivity extends BaseActivity {
 
                 }
             }
-        },"getOrgThread").start();
+        }).start();
 
         final Button btn_tts = findViewById(R.id.btu_tts);
         btn_tts.setOnClickListener(new View.OnClickListener() {
@@ -525,6 +503,93 @@ public class MainActivity extends BaseActivity {
             }
         });
 
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+    //禁用软键盘
+    private void StopInputMethod() {
+        //收起软键盘
+        device_name=findViewById(R.id.device_name);
+        inter1=findViewById(R.id.inter1);
+        inter2=findViewById(R.id.inter2);
+        inter3=findViewById(R.id.inter3);
+        inter4=findViewById(R.id.inter4);
+        port=findViewById(R.id.port);
+        device_name.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                device_name.requestFocus();
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(device_name.getWindowToken(), 0);
+                boolean isKeyboardHidden = !imm.isAcceptingText();
+                if(isKeyboardHidden) {
+                    device_name.clearFocus();
+                }
+            }
+        }, 200); // 200毫秒延迟
+        inter1.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                inter1.requestFocus();
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(inter1.getWindowToken(), 0);
+                boolean isKeyboardHidden = !imm.isAcceptingText();
+                if(isKeyboardHidden) {
+                    inter1.clearFocus();
+                }
+            }
+        }, 200); // 200毫秒延迟
+        inter2.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                inter2.requestFocus();
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(inter2.getWindowToken(), 0);
+                boolean isKeyboardHidden = !imm.isAcceptingText();
+                if(isKeyboardHidden) {
+                    inter2.clearFocus();
+                }
+            }
+        }, 200); // 200毫秒延迟
+        inter3.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                inter3.requestFocus();
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(inter3.getWindowToken(), 0);
+                boolean isKeyboardHidden = !imm.isAcceptingText();
+                if(isKeyboardHidden) {
+                    inter3.clearFocus();
+                }
+            }
+        }, 200); // 200毫秒延迟
+        inter4.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                inter4.requestFocus();
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(inter4.getWindowToken(), 0);
+                boolean isKeyboardHidden = !imm.isAcceptingText();
+                if(isKeyboardHidden) {
+                    inter4.clearFocus();
+                }
+            }
+        }, 200); // 200毫秒延迟
+        port.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                port.requestFocus();
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(port.getWindowToken(), 0);
+                boolean isKeyboardHidden = !imm.isAcceptingText();
+                if(isKeyboardHidden) {
+                    port.clearFocus();
+                }
+            }
+        }, 200); // 200毫秒延迟
     }
 
     @Override
@@ -559,22 +624,6 @@ public class MainActivity extends BaseActivity {
             }
         }
     }
-
-
-    /*public void SendMsg(String msg) {
-        Message message = new Message();
-        message.obj = msg;
-        mHandler.sendMessage(message);
-    }
-
-    private final Handler mHandler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-
-            super.handleMessage(msg);
-            Toast.makeText(Paras.appContext, msg.obj.toString(), Toast.LENGTH_LONG).show();
-        }
-    };*/
 
     private String GetCnWeek(int n) {
         switch (n) {
@@ -695,43 +744,5 @@ public class MainActivity extends BaseActivity {
 
     }
 
-    private Runnable sendZuRunnable = new Runnable() {
-        @Override
-        public void run() {
-            sendTimeData(); // 发送时间数据的方法
-            Paras.handler.postDelayed(this, 3000); // 间隔2秒
-        }
-    };
-    public void sendTimeData() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    /*String gbIp=NetWorkUtils.GetGBIp();
-                    InetAddress group = InetAddress.getByName(gbIp); // 替换为实际的组播地址
-                    int port = 3333; // 替换为实际的端口
 
-                    MulticastSocket socket = new MulticastSocket();
-
-                    String message = "你的广播消息";
-                    byte[] data = message.getBytes();
-
-                    DatagramPacket packet = new DatagramPacket(data, data.length, group, port);
-                    socket.send(packet);*/
-                    InetAddress gbIp=NetWorkUtils.GetGBIp();
-                    DatagramSocket socket = new DatagramSocket();
-                    socket.setBroadcast(true);
-                    String message = "你的广播消息";
-                    byte[] sendData = message.getBytes();
-                    DatagramPacket packet = new DatagramPacket(sendData, sendData.length, gbIp, 8888);
-                    socket.send(packet);
-                    LogHelper.Error("发送广播成功");
-                    socket.close();
-                } catch (Exception e) {
-                    LogHelper.Error("组播发送异常："+e.toString());
-                }
-            }
-        }).start();
-
-    }
 }

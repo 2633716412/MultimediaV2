@@ -18,6 +18,7 @@ import com.example.multimediav2.VerifyActivity;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import Modules.LogHelper;
 import Modules.Paras;
 
 public class VerifyUtil {
@@ -58,7 +59,7 @@ public class VerifyUtil {
                 result = Base64.encodeToString(bitmapBytes, Base64.DEFAULT);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LogHelper.Error("getBitmapString1异常："+e.toString());
         } finally {
             try {
                 if (out != null) {
@@ -66,7 +67,7 @@ public class VerifyUtil {
                     out.close();
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                LogHelper.Error("getBitmapString2异常："+e.toString());
             }
         }
         return result;
@@ -81,7 +82,7 @@ public class VerifyUtil {
             out.flush();
             out.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            LogHelper.Error("getBitmapByte异常："+e.toString());
         }
         return out.toByteArray();
     }

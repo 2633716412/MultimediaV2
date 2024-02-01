@@ -18,11 +18,14 @@ import com.zcapi;
 
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import Modules.DeviceData;
 import Modules.EDate;
 import Modules.LogHelper;
 import Modules.OSTime;
 import Modules.Paras;
+import Modules.SPUnit;
 
 public class PowerManagerA2040_XiPinBox extends BasePowerManager{
     private ComponentName adminReceiver;
@@ -138,27 +141,38 @@ public class PowerManagerA2040_XiPinBox extends BasePowerManager{
         zcApi.setPowetOnOffTime(false,null,null);
         //每次开机，都要重新设置一次
         EDate now = EDate.Now();
-        EDate secondDay=now.AddDays(1);
         OSTime osTime = null;
-        OSTime secondOsTime = null;
+        EDate openDate=null;
+        EDate closeDate=null;
         for (OSTime o : osTimes) {
             if (o.open_hour == 0 && o.open_min == 0 && o.close_hour == 23 && o.close_min == 59)
                 continue;
             if (o.dayofweak == now.DayOfWeek()) {
                 osTime = o;
-                EDate nowDate = new EDate(now.Year(), now.Month(), now.Day(), osTime.open_hour, osTime.open_min, 0);
-                if(nowDate.date.getTime()>now.date.getTime()) {
-                    secondOsTime=osTime;
-                    //secondDay=now;
-                    break;
-                }
-                int index=osTimes.indexOf(0);
-                for (OSTime o2 : osTimes) {
-                    if (osTimes.indexOf(o2)>index) {
-                        secondDay=now.AddDays(osTimes.indexOf(o2)-index);
-                        secondOsTime = o2;
-                        break;
+                //开机时间
+                openDate = new EDate(now.Year(), now.Month(), now.Day(), osTime.open_hour, osTime.open_min, 0);
+                closeDate = new EDate(now.Year(), now.Month(), now.Day(), osTime.close_hour, osTime.close_min, 0);
+
+                //开机时间小于当前时间
+                if(openDate.date.getTime()<=now.date.getTime()) {
+                    //最后一天
+                    if(osTimes.indexOf(o)==osTimes.size()-1) {
+                        //第一天（循环的）
+                        OSTime firstDate=osTimes.get(0);
+                        int addDay=7+firstDate.dayofweak-o.dayofweak;
+                        openDate=openDate.AddDays(addDay);
+                        openDate = new EDate(openDate.Year(), openDate.Month(), openDate.Day(), firstDate.open_hour, firstDate.open_min, 0);
+
+                    } else {
+                        OSTime nextDate=osTimes.get(osTimes.indexOf(o)+1);
+                        int addDay=nextDate.dayofweak-o.dayofweak;
+                        openDate=openDate.AddDays(addDay);
+                        openDate = new EDate(openDate.Year(), openDate.Month(), openDate.Day(), nextDate.open_hour, nextDate.open_min, 0);
                     }
+                }
+                //当关机时间小于当前时间
+                if(closeDate.date.getTime()<=now.date.getTime()) {
+                    closeDate=now.AddMins(2);
                 }
                 break;
             }
@@ -167,13 +181,9 @@ public class PowerManagerA2040_XiPinBox extends BasePowerManager{
         //未设置开关机策略，则什么都不做
         if (osTime == null)
             return;
-        if(secondOsTime==null) {
-            secondOsTime=osTimes.get(0);
-            int addDay=7+osTimes.get(0).dayofweak-osTime.dayofweak;
-            secondDay=now.AddDays(addDay);
-        }
-        EDate begin = new EDate(secondDay.Year(), secondDay.Month(), secondDay.Day(), secondOsTime.open_hour, secondOsTime.open_min, 0);
-        EDate end = new EDate(now.Year(), now.Month(), now.Day(), osTime.close_hour, osTime.close_min, 0);
+
+        EDate begin = new EDate(openDate.Year(), openDate.Month(), openDate.Day(), openDate.date.getHours(), openDate.date.getMinutes(), 0);
+        EDate end = new EDate(closeDate.Year(), closeDate.Month(), closeDate.Day(), closeDate.date.getHours(), closeDate.date.getMinutes(), 0);
 
         long onTimes = begin.date.getTime();
         long offTimes = end.date.getTime();
@@ -188,14 +198,15 @@ public class PowerManagerA2040_XiPinBox extends BasePowerManager{
         int year = Integer.parseInt(yearStr.substring(0,4));*/
         int begin_year = Integer.parseInt(begin.ToString().substring(0,4));
         int end_year = Integer.parseInt(end.ToString().substring(0,4));
-        int []onTime={begin_year,secondDay.Month(),secondDay.Day(),secondOsTime.open_hour,secondOsTime.open_min};
-        int []offTime={end_year,now.Month(),now.Day(),osTime.close_hour,osTime.close_min};
-        LogHelper.Debug("开机："+secondDay.Year()+"-"+secondDay.Month()+"-"+secondDay.Day()+" "+secondOsTime.open_hour+secondOsTime.open_min);
-        LogHelper.Debug("关机："+now.Year()+"-"+now.Month()+"-"+now.Day()+" "+osTime.close_hour+osTime.close_min);
+        int []onTime={begin_year,openDate.Month(),openDate.Day(),openDate.date.getHours(),openDate.date.getMinutes()};
+        int []offTime={end_year,closeDate.Month(),closeDate.Day(),closeDate.date.getHours(),closeDate.date.getMinutes()};
+        LogHelper.Debug("开机："+begin_year+"-"+openDate.Month()+"-"+openDate.Day()+" "+openDate.date.getHours()+openDate.date.getMinutes());
+        LogHelper.Debug("关机："+end_year+"-"+closeDate.Month()+"-"+closeDate.Day()+" "+closeDate.date.getHours()+closeDate.date.getMinutes());
         zcApi.setPowetOnOffTime(true,onTime,offTime);
     }
     @Override
     public void StartListen() {
+        Paras.executor.scheduleAtFixedRate(listenShutDown,5,30, TimeUnit.SECONDS);
     }
     @Override
     public void StopListen() {
@@ -240,4 +251,48 @@ public class PowerManagerA2040_XiPinBox extends BasePowerManager{
         BaseActivity.currActivity.startActivityForResult(intent, 0);
 
     }
+
+    public Runnable listenShutDown=new Runnable() {
+        @Override
+        public void run() {
+            EDate now = EDate.Now();
+            SPUnit spUnit = new SPUnit(context);
+            DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
+            OSTime osTime = null;
+            EDate openDate=null;
+            EDate closeDate=null;
+            EDate willCloseDate=null;
+            for (OSTime o : deviceData.getOsTimes()) {
+                if (o.dayofweak == now.DayOfWeek()) {
+                    openDate = new EDate(now.Year(), now.Month(), now.Day(), osTime.open_hour, osTime.open_min, 0);
+                    closeDate = new EDate(now.Year(), now.Month(), now.Day(), osTime.close_hour, osTime.close_min, 0);
+                    willCloseDate=closeDate.AddMins(-1);
+                    //当开机时间小于关机时间情况下即将关机时重新设置开关机时间
+                    if(now.Between(willCloseDate,closeDate)&&openDate.date.getTime()<closeDate.date.getTime()){
+                        //最后一天
+                        if(deviceData.getOsTimes().indexOf(o)==deviceData.getOsTimes().size()-1) {
+                            //第一天（循环的）
+                            OSTime firstDate=deviceData.getOsTimes().get(0);
+                            int addDay=7+firstDate.dayofweak-o.dayofweak;
+                            openDate=openDate.AddDays(addDay);
+                            openDate = new EDate(openDate.Year(), openDate.Month(), openDate.Day(), firstDate.open_hour, firstDate.open_min, 0);
+
+                        } else {
+                            OSTime nextDate=osTimes.get(osTimes.indexOf(o)+1);
+                            int addDay=nextDate.dayofweak-o.dayofweak;
+                            openDate=openDate.AddDays(addDay);
+                            openDate = new EDate(openDate.Year(), openDate.Month(), openDate.Day(), nextDate.open_hour, nextDate.open_min, 0);
+                        }
+                        int begin_year = Integer.parseInt(openDate.ToString().substring(0,4));
+                        int end_year = Integer.parseInt(closeDate.ToString().substring(0,4));
+                        int []onTime={begin_year,openDate.Month(),openDate.Day(),openDate.date.getHours(),openDate.date.getMinutes()};
+                        int []offTime={end_year,closeDate.Month(),closeDate.Day(),closeDate.date.getHours(),closeDate.date.getMinutes()};
+                        LogHelper.Debug("第二天开机时间："+begin_year+"-"+openDate.Month()+"-"+openDate.Day()+" "+openDate.date.getHours()+openDate.date.getMinutes());
+                        LogHelper.Debug("关机："+end_year+"-"+closeDate.Month()+"-"+closeDate.Day()+" "+closeDate.date.getHours()+closeDate.date.getMinutes());
+                        zcApi.setPowetOnOffTime(true,onTime,offTime);
+                    }
+                }
+            }
+        }
+    };
 }

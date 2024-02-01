@@ -66,7 +66,11 @@ abstract class BasePowerManager implements IPowerManager {
                     opening = true;
                     LogHelper.Debug("预设时间已到，准备开机...");
                     Paras.msgManager.SendMsg("预设时间已到，准备开机...");
-                    Reboot();
+
+                    if(Paras.devType.equals(Paras.DEVA40_XiPin)) {
+                        Paras.powerManager.Open();
+                    }
+                    Paras.powerManager.Reboot();
                     //releaseLock();
                 } catch (Exception ex) {
                     opening = temp;

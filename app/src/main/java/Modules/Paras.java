@@ -1,19 +1,17 @@
 package Modules;
 
 import android.content.Context;
-import android.os.Handler;
 
 import com.example.multimediav2.CacheServer.ICacheServer;
-import com.example.multimediav2.Models.MyThread;
 import com.example.multimediav2.PowerManager.IPowerManager;
 import com.example.multimediav2.VolumeManager.IVolumeManager;
 
 import java.util.Date;
+import java.util.concurrent.ScheduledExecutorService;
 
 public class Paras {
 
     //<editor-fold desc="常量">
-    public static Handler handler;
     public static final int heart_time=1;
     public static final int time_start_listen_power = 60;
 
@@ -72,7 +70,7 @@ public class Paras {
     //0命令线程 1定时开关机 2截屏 3海康喂狗
     public static boolean[] hasRun=new boolean[4];
 
-    public static int fail_num=0;
+    public static int update_num=0;
 
     public static int success_num=0;
 
@@ -84,5 +82,5 @@ public class Paras {
     public static String underUrl="";
     public static boolean refresh=false;
     public static Date programEndDate=new Date();
-    public static MyThread heartThread;
+    public static ScheduledExecutorService executor;//线程池
 }

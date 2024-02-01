@@ -8,6 +8,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import Modules.LogHelper;
+
 public class Base64FileUtil {
 
     /**
@@ -62,7 +64,7 @@ public class Base64FileUtil {
         while (i<1000000) {
             if(TextUtils.isEmpty(path)){
                 i++;
-
+                continue;
                 //return null;
             }
             InputStream is = null;
@@ -83,13 +85,13 @@ public class Base64FileUtil {
                 }
 
             }catch (Exception e){
-                e.printStackTrace();
-            }finally {
+                //LogHelper.Error("转换base64异常："+e.toString());
+            } finally {
                 if(null !=is){
                     try {
                         is.close();
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        LogHelper.Error("base64转换InputStream关闭异常："+e.toString());
                     }
                 }
 

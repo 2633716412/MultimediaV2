@@ -1,8 +1,7 @@
 package com.example.multimediav2.PowerManager;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
 
 import com.example.multimediav2.BaseActivity;
 import com.example.multimediav2.FileUnit.FileUnitDef;
@@ -11,7 +10,6 @@ import com.ys.rkapi.MyManager;
 
 import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -36,11 +34,12 @@ public class PowerManager_HKRK3128 implements IPowerManager {
     private static MyManager  mMyManager;
     static FileUnitDef fileUnitDef;
     boolean offOrOn;
+    public static String shutPath="";
     public PowerManager_HKRK3128(Context context) {
         this.context = context;
-        mMyManager = MyManager.getInstance(Paras.appContext);
-        mMyManager.bindAIDLService(Paras.appContext);
-        mMyManager.daemon("com.nf.appmonitor",1);
+
+        initMyManager();
+        /*mMyManager.bindAIDLService(Paras.appContext);
         mMyManager.setADBOpen(true);
         mMyManager.setConnectClickInterface(new MyManager.ServiceConnectedInterface() {
             @Override
@@ -48,7 +47,7 @@ public class PowerManager_HKRK3128 implements IPowerManager {
                 //回调成功,可以正常调用接口了
                 //例如：mMyManager. getApiVersion();
             }
-        });
+        });*/
         final SPUnit spUnit = new SPUnit(context);
         final DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
         offOrOn=deviceData.getStopUSB().equals("N");
@@ -58,9 +57,39 @@ public class PowerManager_HKRK3128 implements IPowerManager {
             osTimes.add(new OSTime(i, 0, 0, 23, 59));
         }
     }
+    private void initMyManager() {
+        new MyManagerInitTask().execute();
+    }
 
+    private class MyManagerInitTask extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... voids) {
+            LogHelper.Debug("开始绑定服务");
+            try {
+                mMyManager = MyManager.getInstance(Paras.appContext);
+                mMyManager.bindAIDLService(Paras.appContext);
+            } catch (Exception e) {
+                LogHelper.Error("绑定服务异常"+e.toString());
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            mMyManager.setConnectClickInterface(new MyManager.ServiceConnectedInterface() {
+                @Override
+                public void onConnect() {
+                    // 回调成功，可以正常调用接口了
+                    LogHelper.Debug("绑定服务回调成功");
+                    mMyManager.daemon("com.nf.appmonitor", 1);
+                    mMyManager.setADBOpen(true);
+                }
+            });
+        }
+    }
     @Override
     public void Install(String path) {
+        mMyManager = MyManager.getInstance(Paras.appContext);
         boolean success=mMyManager.silentInstallApk(path,true);
         LogHelper.Debug("安装结果："+success);
         /*File file=new File(path);
@@ -80,6 +109,7 @@ public class PowerManager_HKRK3128 implements IPowerManager {
 
     @Override
     public void StatusBar() {
+        mMyManager = MyManager.getInstance(Paras.appContext);
         mMyManager.setSlideShowNotificationBar(false);
         mMyManager.setSlideShowNavBar(false);
     }
@@ -174,6 +204,7 @@ public class PowerManager_HKRK3128 implements IPowerManager {
         //息屏
         opening=false;
         LogHelper.Debug("准备关机...");
+        mMyManager = MyManager.getInstance(Paras.appContext);
         mMyManager.turnOffBackLight();
     }
 
@@ -182,6 +213,7 @@ public class PowerManager_HKRK3128 implements IPowerManager {
         //亮屏
         opening=true;
         LogHelper.Debug("准备开机...");
+        mMyManager = MyManager.getInstance(Paras.appContext);
         mMyManager.turnOnBackLight();
     }
 
@@ -189,6 +221,7 @@ public class PowerManager_HKRK3128 implements IPowerManager {
     public void Reboot() {
         opening=true;
         LogHelper.Debug("准备重启...");
+        mMyManager = MyManager.getInstance(Paras.appContext);
         mMyManager.reboot();
     }
 
@@ -227,34 +260,56 @@ public class PowerManager_HKRK3128 implements IPowerManager {
         }
     }
 
-    public static String Screenshot() {
-        File file= Paras.appContext.getExternalFilesDir("nf");
-        String dir1 = file.getPath();
-        BaseActivity.deleteFile(dir1,"jpg");
-        try {
+    /*private static void shutScreen() {
+        new shutScreenTask().execute();
+    }
 
+    private static class shutScreenTask extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... voids) {
+            mMyManager.bindAIDLService(Paras.appContext);
+            mMyManager.setConnectClickInterface(new MyManager.ServiceConnectedInterface() {
+                @Override
+                public void onConnect() {
+                    // 回调成功，可以正常调用接口了
+
+                }
+            });
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+
+        }
+    }*/
+
+    public static String Screenshot() {
+        File fileSave = Paras.appContext.getExternalFilesDir("nf");
+        String dir=fileSave.getPath();
+        BaseActivity.deleteFile(dir,"jpg");
+        try {
             fileUnitDef = new FileUnitDef();
             SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
             String fn = formatter.format(new Date()) + ".jpg";
-            //String dir = Environment.getExternalStorageDirectory() + "/nf";
-            File fileSave = Paras.appContext.getExternalFilesDir("nf");
-            String dir=fileSave.getPath();
-            file=new File(dir,fn);
-            mMyManager.bindAIDLService(Paras.appContext);
-            boolean res=mMyManager.takeScreenshot(file.getPath());
+            shutPath=dir+fn;
+            //mMyManager.bindAIDLService(Paras.appContext);
+            //shutScreen();
+            mMyManager = MyManager.getInstance(Paras.appContext);
+            // 回调成功，可以正常调用接口了
+            boolean res=mMyManager.takeScreenshot(shutPath);
             LogHelper.Debug("截屏结果："+res);
-            byte[] bytes=BaseActivity.File2Bytes(file);
+            /*byte[] bytes=BaseActivity.File2Bytes(file);
             file.delete();
             Bitmap bitmap= BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
             Bitmap bitmap1=BaseActivity.adjustPhotoRotation(bitmap,90);
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
             bitmap1.compress(Bitmap.CompressFormat.JPEG, 80, stream);
-            fileUnitDef.Save(dir,fn,stream.toByteArray());
+            fileUnitDef.Save(dir,fn,stream.toByteArray());*/
         } catch (Exception ex) {
             LogHelper.Error(ex);
-        } finally {
-            return file.getPath();
         }
+        return shutPath;
     }
     public void Handler() {
 

@@ -7,17 +7,12 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
-import android.os.Build;
 import android.os.PowerManager;
 import android.view.View;
-
-import androidx.core.content.FileProvider;
 
 import com.example.multimediav2.BaseActivity;
 import com.zcapi;
 
-import java.io.File;
 import java.util.Calendar;
 
 import Modules.LogHelper;
@@ -113,7 +108,13 @@ public class PowerManagerA2040_XiPin extends BasePowerManager{
     }
     @Override
     public void Install(String path) {
-        File file=new File(path);
+        try {
+            zcapi zcApi=new zcapi();
+            zcApi.InstallApk(path,true);
+        } catch (Exception e){
+
+        }
+        /*File file=new File(path);
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -125,7 +126,7 @@ public class PowerManagerA2040_XiPin extends BasePowerManager{
             intent.setDataAndType(Uri.fromFile(file), "application/vnd.android.package-archive");
         }
 
-        Paras.appContext.startActivity(intent);
+        Paras.appContext.startActivity(intent);*/
         //SilentInstallManager.silentInstallApk(Paras.appContext,path);
 
     }

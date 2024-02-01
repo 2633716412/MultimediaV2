@@ -2,12 +2,21 @@ package com.example.multimediav2.Utils;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Picture;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.util.Log;
+import android.webkit.WebView;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InterfaceAddress;
@@ -66,7 +75,7 @@ public class NetWorkUtils {
             }
 
         } catch (SocketException e) {
-            e.printStackTrace();
+            LogHelper.Error("getLocalIp异常："+e.toString());
         }
         return "";
     }
@@ -274,10 +283,11 @@ public class NetWorkUtils {
         }
     }*/
 
-    public static InetAddress GetGBIp() {
+    public static String GetGBIp() {
         String gbIp="";
         try {
-            /*Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+
             while (interfaces.hasMoreElements()) {
                 NetworkInterface networkInterface = interfaces.nextElement();
 
@@ -291,26 +301,11 @@ public class NetWorkUtils {
                     InetAddress address = addresses.nextElement();
 
                     if (address.isSiteLocalAddress()) {
-                        gbIp=address.getHostAddress();
-                        LogHelper.Debug("原地址"+gbIp);
+                        InetAddress item=calculateBroadcastAddress(address);
+                        if(item!=null) {
+                            return item.getHostAddress();
+                        }
                     }
-                }
-            }*/
-            Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
-            while (networkInterfaces.hasMoreElements()) {
-                NetworkInterface networkInterface = networkInterfaces.nextElement();
-                Enumeration<InetAddress> inetAddresses = networkInterface.getInetAddresses();
-                while (inetAddresses.hasMoreElements()) {
-                    InetAddress inetAddress = inetAddresses.nextElement();
-                    if (inetAddress.isLoopbackAddress()) {
-                        continue;
-                    }
-                    if (inetAddress instanceof java.net.Inet4Address) {
-                        gbIp=inetAddress.getHostAddress();
-                    } else if (inetAddress instanceof java.net.Inet6Address) {
-                        gbIp=inetAddress.getHostAddress();
-                    }
-                    return calculateBroadcastAddress(inetAddress);
                 }
             }
         } catch (Exception e) {
@@ -332,5 +327,81 @@ public class NetWorkUtils {
             }
         }
         return null;
+    }
+    //截取屏幕Bitmap
+    public static Bitmap captureWebView(final WebView webView) {
+        int width = getWebViewWidth(webView);
+        int height = getWebViewHeight(webView);
+
+        if (width <= 0 || height <= 0) {
+            // 处理宽度或高度无效的情况
+            return null;
+        }
+        Picture picture = webView.capturePicture();
+        /*int width = picture.getWidth();
+        int height = picture.getHeight();*/
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        picture.draw(canvas);
+        return bitmap;
+        /*Bitmap bmp = null;
+        try {
+            if (BaseActivity.currActivity != null) {
+                View dView = BaseActivity.currActivity.getWindow().getDecorView();
+                dView.setDrawingCacheEnabled(true);
+                dView.destroyDrawingCache();
+                dView.buildDrawingCache();
+                bmp = dView.getDrawingCache();
+            }
+        } catch (Exception ex) {
+            LogHelper.Error(ex);
+        } finally {
+            return bmp;
+        }*/
+    }
+    //判断是否白屏
+    public static boolean isWhiteScreen(Bitmap bitmap) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
+
+        for (int pixel : pixels) {
+            int red = Color.red(pixel);
+            int green = Color.green(pixel);
+            int blue = Color.blue(pixel);
+
+            if (red != 255 || green != 255 || blue != 255) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+    private static int getWebViewWidth(WebView webView) {
+        return webView.getWidth() > 0 ? webView.getWidth() : webView.getMeasuredWidth();
+    }
+
+    private static int getWebViewHeight(WebView webView) {
+        return webView.getHeight() > 0 ? webView.getHeight() : webView.getMeasuredHeight();
+    }
+
+    public static InputStream getFileInputStream(String filePath) {
+        InputStream inputStream = null;
+        try {
+            File file=new File(filePath);
+            inputStream = new FileInputStream(file);
+        } catch (IOException e) {
+            LogHelper.Error("getFileInputStream转换失败"+e.toString());
+        } /*finally {
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                    LogHelper.Error("getFileInputStream流关闭异常"+e.toString());
+                }
+            }
+        }*/
+        return inputStream;
     }
 }

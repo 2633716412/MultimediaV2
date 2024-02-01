@@ -3,6 +3,7 @@ package com.example.multimediav2.Socket;
 import com.example.multimediav2.HttpUnit.HttpUnitFactory;
 
 import Modules.DeviceData;
+import Modules.LogHelper;
 import Modules.Paras;
 import Modules.SPUnit;
 
@@ -16,7 +17,7 @@ public class PollingService implements Runnable {
                 String jsonStr= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getCmd");
 
             } catch (Exception e) {
-                e.printStackTrace();
+                LogHelper.Error("PollingService异常："+e.toString());
             }
         }
 

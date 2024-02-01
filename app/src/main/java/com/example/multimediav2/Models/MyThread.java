@@ -59,43 +59,43 @@ public class MyThread extends Thread {
                         updateObject.put("sn",deviceData.getSn());
                         updateObject.put("is_record",1);
                         updateObject.put("device_status",device_status);
-                        String updateRes="";
-                        try {
-                            if(NetWorkUtils.isNetworkAvailable(Paras.appContext)) {
-                                updateRes= HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/updateHeartTime",updateObject.toString());
-                            }
+                        if (Paras.update_num==0) {
+                            String updateRes="";
+                            try {
+                                if(NetWorkUtils.isNetworkAvailable(Paras.appContext)) {
+                                    updateRes= HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/updateHeartTime",updateObject.toString());
+                                }
 
-                        } catch (Exception e) {
+                            } catch (Exception e) {
                                     /*LogHelper.Error("更新心跳时间异常："+e);
                                     Paras.msgManager.SendMsg("网络连接异常");*/
-                            if (Paras.fail_num==0) {
-                                Paras.fail_num++;
-                            } else {
-                                Paras.fail_num++;
-                                if(Paras.fail_num>=10) {
-                                    Paras.fail_num=0;
-                                    LogHelper.Error("更新心跳时间异常："+e);
-                                    Paras.msgManager.SendMsg("网络连接异常");
-                                    Paras.updateProgram=true;
-                                    Paras.underUrl="";
-                                    Paras.programUrl="";
+                                LogHelper.Error("更新心跳时间异常："+e);
+                                Paras.msgManager.SendMsg("网络连接异常");
+                                Paras.updateProgram=true;
+                                Paras.underUrl="";
+                                Paras.programUrl="";
+                            }
+                            if(!Objects.equals(updateRes, "")) {
+                                JSONObject timeObject= new JSONObject(updateRes);
+                                boolean res = timeObject.getBoolean("success");
+                                if(res) {
+                                    if (Paras.success_num==0) {
+                                        LogHelper.Debug("更新心跳时间成功");
+                                        Paras.success_num++;
+                                    } else {
+                                        Paras.success_num++;
+                                        if(Paras.success_num>=10) {
+                                            Paras.success_num=0;
+                                        }
+                                    }
+
                                 }
                             }
-                        }
-                        if(!Objects.equals(updateRes, "")) {
-                            JSONObject timeObject= new JSONObject(updateRes);
-                            boolean res = timeObject.getBoolean("success");
-                            if(res) {
-                                Paras.fail_num=0;
-                                if (Paras.success_num==0) {
-                                    LogHelper.Debug("更新心跳时间成功");
-                                    Paras.success_num++;
-                                } else {
-                                    Paras.success_num++;
-                                    if(Paras.success_num>=60) {
-                                        Paras.success_num=0;
-                                    }
-                                }
+                            Paras.update_num++;
+                        } else {
+                            Paras.update_num++;
+                            if(Paras.update_num>=10) {
+                                Paras.update_num=0;
 
                             }
                         }

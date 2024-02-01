@@ -71,7 +71,7 @@ public class SystemTimeSetterDef implements ISystemTimeSetter {
                 }
                 process.destroy();
             } catch (Exception e) {
-                e.printStackTrace();
+                LogHelper.Error("execRootCmd异常："+e.toString());
             }
         }
     }
