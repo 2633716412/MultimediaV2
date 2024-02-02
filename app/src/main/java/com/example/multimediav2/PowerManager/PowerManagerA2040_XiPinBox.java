@@ -6,17 +6,12 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
-import android.os.Build;
 import android.os.PowerManager;
-
-import androidx.core.content.FileProvider;
 
 import com.example.multimediav2.BaseActivity;
 import com.example.multimediav2.Models.MyBroadcastReceiver;
 import com.zcapi;
 
-import java.io.File;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -214,7 +209,13 @@ public class PowerManagerA2040_XiPinBox extends BasePowerManager{
 
     @Override
     public void Install(String path) {
-        File file=new File(path);
+        try {
+            zcapi zcApi=new zcapi();
+            zcApi.InstallApk(path,true);
+        } catch (Exception e){
+            LogHelper.Error("静默安装失败："+e.toString());
+        }
+        /*File file=new File(path);
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -226,7 +227,7 @@ public class PowerManagerA2040_XiPinBox extends BasePowerManager{
             intent.setDataAndType(Uri.fromFile(file), "application/vnd.android.package-archive");
         }
 
-        Paras.appContext.startActivity(intent);
+        Paras.appContext.startActivity(intent);*/
     }
 
     @Override

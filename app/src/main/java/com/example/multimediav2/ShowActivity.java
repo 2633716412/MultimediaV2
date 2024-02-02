@@ -339,8 +339,9 @@ public class ShowActivity extends BaseActivity {
                             //LogHelper.Debug("加载资源："+resList);
                             //半夜23点重启
                             EDate now = EDate.Now();
-                            EDate rebootDate = new EDate(now.Year(), now.Month(), now.Day(), 23, 0, 0);;
-                            if(now.date.getTime() == rebootDate.date.getTime()) {
+                            EDate rebootDate = new EDate(now.Year(), now.Month(), now.Day(), 23, 0, 0);
+                            EDate rebootEndDate = new EDate(now.Year(), now.Month(), now.Day(), 23, 0, 20);;
+                            if(now.Between(rebootDate,rebootEndDate)) {
                                 Paras.powerManager.Reboot();
                             }
                             //LogHelper.Debug("堆内存"+android.os.Debug.getNativeHeapAllocatedSize());
@@ -356,7 +357,7 @@ public class ShowActivity extends BaseActivity {
                     }
                     if(Paras.programEndDate!=null&&nowTime.getTime()>Paras.programEndDate.getTime()) {
                         LogHelper.Debug("节目结束时间："+Paras.programEndDate);
-
+                        Paras.material_finish=false;//素材是否加载完成
                         Paras.underUrl="";
                         Paras.programUrl="";
                         Paras.updateProgram=true;
@@ -569,6 +570,11 @@ public class ShowActivity extends BaseActivity {
                         String repeatDay = object1.getString("repet_day");
                         Long programId = object1.getLong("program_id");
                         String underUrl=object1.getString("under_url");
+                        int material_count = object1.optInt("material_count", 0);
+                        //判断节目素材是否加载完成
+                        if(material_count > 0 && resList.size() == material_count) {
+                            Paras.material_finish = true;
+                        }
                         DateUtil dateUtil = new DateUtil();
                         String nowWeek = String.valueOf(dateUtil.DayOfWeek());
                         if (repeatDay.contains(nowWeek)) {
@@ -577,6 +583,7 @@ public class ShowActivity extends BaseActivity {
                                 JSONObject timeObject = timeList.getJSONObject(j);
                                 String startStr = timeObject.getString("begin_time");
                                 String endStr = timeObject.getString("end_time");
+
                                 DateUtil begin = DateUtil.GetByHourMin(startStr);
                                 DateUtil end = DateUtil.GetByHourMin(endStr);
                                 DateUtil now = DateUtil.Now();

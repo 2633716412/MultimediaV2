@@ -253,7 +253,7 @@ public class HttpUnit_Okhttp implements IHttpUnit {
 
     // 创建一个限流拦截器
     Interceptor rateLimitInterceptor = new Interceptor() {
-        //5Mb/s
+        //3Mb/s
         private final Semaphore semaphore = new Semaphore(5000);
 
         @Override

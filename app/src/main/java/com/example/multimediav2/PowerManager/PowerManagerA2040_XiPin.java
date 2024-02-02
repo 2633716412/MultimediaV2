@@ -112,7 +112,7 @@ public class PowerManagerA2040_XiPin extends BasePowerManager{
             zcapi zcApi=new zcapi();
             zcApi.InstallApk(path,true);
         } catch (Exception e){
-
+            LogHelper.Error("静默安装失败："+e.toString());
         }
         /*File file=new File(path);
         Intent intent = new Intent(Intent.ACTION_VIEW);

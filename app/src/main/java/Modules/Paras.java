@@ -83,4 +83,5 @@ public class Paras {
     public static boolean refresh=false;
     public static Date programEndDate=new Date();
     public static ScheduledExecutorService executor;//线程池
+    public static boolean material_finish=false;//节目素材数量
 }
