@@ -6,12 +6,14 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.PowerManager;
 
 import com.example.multimediav2.BaseActivity;
 import com.example.multimediav2.Models.MyBroadcastReceiver;
 import com.zcapi;
 
+import java.io.File;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -27,7 +29,7 @@ public class PowerManagerA2040_XiPinBox extends BasePowerManager{
     private PowerManager mPowerManager;
     private DevicePolicyManager policyManager;
     private PowerManager.WakeLock wakeLock;
-    zcapi zcApi=new zcapi();
+    public  static zcapi zcApi=new zcapi();
     Context context;
     boolean isOpen=true;
     public PowerManagerA2040_XiPinBox(Context context) {
@@ -209,12 +211,10 @@ public class PowerManagerA2040_XiPinBox extends BasePowerManager{
 
     @Override
     public void Install(String path) {
-        try {
-            zcapi zcApi=new zcapi();
-            zcApi.InstallApk(path,true);
-        } catch (Exception e){
-            LogHelper.Error("静默安装失败："+e.toString());
-        }
+        zcApi.getContext(Paras.appContext);
+        zcApi.InstallApk(path,true);
+        /*MyAsyncTask task = new MyAsyncTask();
+        task.execute(path); // 执行异步任务*/
         /*File file=new File(path);
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -229,7 +229,57 @@ public class PowerManagerA2040_XiPinBox extends BasePowerManager{
 
         Paras.appContext.startActivity(intent);*/
     }
+    public static class MyAsyncTask extends AsyncTask<String, Integer, String> {
 
+        // 参数传递给后台任务
+        private OnTaskCompletedListener listener;
+
+        public MyAsyncTask() {
+            this.listener = listener;
+        }
+
+        // 在后台线程执行的操作
+        @Override
+        protected String doInBackground(String... params) {
+            // params[0] 是传入的第一个参数
+            String inputParam = params[0];
+
+            // 这里模拟一个耗时操作
+            try {
+                File file = new File(inputParam);
+                LogHelper.Debug("是否文件"+file.isFile());
+                Thread.sleep(2000);
+                zcApi.InstallApk(inputParam,true);
+            } catch (Exception e){
+                LogHelper.Error("静默安装失败："+e.toString());
+            }
+
+            // 根据输入参数进行计算并返回结果
+            return "Processed: " + inputParam;
+        }
+
+        // 当后台任务执行过程中需要更新进度时调用
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            super.onProgressUpdate(values);
+            // 更新UI线程中的进度条等组件
+        }
+
+        // 后台任务完成后在主线程中执行的操作
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+            // 将结果通过回调接口通知到UI线程
+            if (listener != null) {
+                listener.onTaskCompleted(result);
+            }
+        }
+
+        // 自定义一个回调接口
+        public interface OnTaskCompletedListener {
+            void onTaskCompleted(String result);
+        }
+    }
     @Override
     public void StatusBar() {
         zcApi.setStatusBar(false);

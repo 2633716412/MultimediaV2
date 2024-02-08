@@ -1,5 +1,7 @@
 package com.example.multimediav2.Utils;
 
+import android.os.AsyncTask;
+
 import com.example.multimediav2.HttpUnit.HttpUnitFactory;
 
 import org.jsoup.Jsoup;
@@ -45,13 +47,13 @@ public class VideoUrlParser {
     }
 
     public static InputStream getCachedVideo(String videoUrl) {
-        int indexEnd=videoUrl.lastIndexOf(".");
         int indexStart=videoUrl.lastIndexOf("/");
-        String filename = videoUrl.substring(indexStart,indexEnd); // 生成唯一的文件名
-        File cacheFile = new File(Paras.appContext.getCacheDir(), filename); // 缓存目录为应用的内部缓存目录
+        String filename = videoUrl.substring(indexStart); // 生成唯一的文件名
+        String fn=Paras.appContext.getExternalFilesDir("/nf/cache").getPath();
+        File cacheFile = new File(fn, filename); // 缓存目录为应用的内部缓存目录
 
         try {
-            if (cacheFile.exists()) {
+            if (cacheFile.isFile()) {
                 return new FileInputStream(cacheFile);
             }
         } catch (IOException e) {
@@ -72,7 +74,7 @@ public class VideoUrlParser {
     public static String downloadVideo(String videoUrl,int size) {
         int indexStart=videoUrl.lastIndexOf("/");
         String filename = videoUrl.substring(indexStart); // 生成唯一的文件名
-        String fn=Paras.appContext.getExternalFilesDir("/nf/cache").getPath();
+        String fn=Paras.appContext.getExternalFilesDir("/nf").getPath();
         File f_dir = new File(fn);
         if (!f_dir.exists()) {
             boolean re = f_dir.mkdirs();
@@ -86,7 +88,10 @@ public class VideoUrlParser {
         if(!file.exists() || file.length() < size) {
             try {
                // LogHelper.Debug("开始缓存");
-                HttpUnitFactory.Get().DownLoad(videoUrl, fn, filename, null,null);
+                //HttpUnitFactory.Get().DownLoad(videoUrl, fn, filename, null,null);
+                // 使用示例
+                new VideoDownloadTask(videoUrl, fn, filename).execute();
+                LogHelper.Debug("文件下载完成");
             } catch (Exception e) {
                 LogHelper.Error("文件缓存异常："+e);
             }
@@ -101,7 +106,7 @@ public class VideoUrlParser {
 
     //删除缓存文件
     public static void deleteCacheFile() {
-        File file = new File(Paras.appContext.getExternalFilesDir("/nf/cache").getPath());
+        File file = new File(Paras.appContext.getExternalFilesDir("/nf").getPath());
         // 获取当前目录下的目录和文件
         File[] listFiles = file.listFiles();
         for (File f:listFiles) {
@@ -112,4 +117,32 @@ public class VideoUrlParser {
             }
         }
     }
+
+    public static class VideoDownloadTask extends AsyncTask<Void, Integer, Boolean> {
+
+        private String videoUrl;
+        private String fn;
+        private String filename;
+
+        public VideoDownloadTask(String videoUrl, String fn, String filename) {
+            this.videoUrl = videoUrl;
+            this.fn = fn;
+            this.filename = filename;
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... voids) {
+            // 假设 DownLoad 方法内部已经处理了异步下载和进度更新
+            try {
+                HttpUnitFactory.Get().DownLoad(videoUrl, fn, filename, null,null);
+            } catch (Exception e) {
+                LogHelper.Error("资源下载异常："+e.toString());
+            }
+
+            return true;
+        }
+
+
+    }
+
 }

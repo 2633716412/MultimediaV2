@@ -3,6 +3,7 @@ package com.example.multimediav2.HttpUnit;
 import android.os.Build;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
@@ -45,7 +46,7 @@ public class HttpUnit_Okhttp implements IHttpUnit {
     public HttpUnit_Okhttp() {
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
         // 添加限流拦截器
-        builder.addInterceptor(rateLimitInterceptor);
+        //builder.addInterceptor(rateLimitInterceptor);
         //短连接
         builder.connectionPool(connectionPool);
 
@@ -123,10 +124,15 @@ public class HttpUnit_Okhttp implements IHttpUnit {
     }
 
     public void DownLoad(String url, final String dir, final String fn, final Action<Long> OnDwonloading, final Action Downloaded) throws Exception {
-        DownLoad(url, dir, fn, OnDwonloading, Downloaded, false);
+        if(Downloaded != null) {
+            DownLoad2(url, dir, fn, OnDwonloading, Downloaded, false);
+        } else {
+            DownLoad(url, dir, fn, OnDwonloading, null, false);
+        }
+
     }
 
-    /*public void DownLoad(String url, final String dir, final String fn, final Action<Long> OnDwonloading, final Action Downloaded, boolean usePeoxy) throws Exception {
+    public void DownLoad2(String url, final String dir, final String fn, final Action<Long> OnDwonloading, final Action Downloaded, boolean usePeoxy) throws Exception {
         // 检查本地文件是否存在，并获取其大小作为已下载的起始位置
         File file = new File(dir, fn);
         downloadedBytes = 0;
@@ -204,7 +210,7 @@ public class HttpUnit_Okhttp implements IHttpUnit {
         };
 
         client.newCall(request).enqueue(callback);
-    }*/
+    }
 
     public void Upload(String url, HashMap<String, Object> paras, boolean usePeoxy) throws Exception {
 
@@ -298,7 +304,7 @@ public class HttpUnit_Okhttp implements IHttpUnit {
             @Override
             public void onFailure(Call call, IOException e) {
                 // 处理下载失败的情况
-                e.printStackTrace();
+                LogHelper.Error(e.toString());
             }
 
             @Override
@@ -318,7 +324,7 @@ public class HttpUnit_Okhttp implements IHttpUnit {
                     InputStream in = response.body().byteStream();
                     byte[] buffer = new byte[8192];
                     int read;
-
+                    Long totalDownloaded = 0L;
                     while ((read = in.read(buffer)) != -1) {
                         out.write(buffer, 0, read);
                         downloadedBytes += read;
@@ -329,9 +335,10 @@ public class HttpUnit_Okhttp implements IHttpUnit {
 
                     // 下载完成，检查文件完整性并重命名
                     if (downloadedBytes == contentLength || isContentRangeComplete(contentRange, contentLength)) {
-                        LogHelper.Debug("文件下载完成");
+                        //LogHelper.Debug("文件下载完成");
                         //renameTempFileToTarget(targetFilePath);
                     }
+                    in.close();
                 }
             }
         });

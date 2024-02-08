@@ -87,6 +87,8 @@ public class CustApplication extends Application implements Thread.UncaughtExcep
         Intent intent = new Intent();
         intent.setAction("com.example.ACTION_SEND_TIME");
         intent.putExtra("time", System.currentTimeMillis());
+        // 设置广播权限为允许其他应用接收
+        intent.setFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
         sendBroadcast(intent);
     }
 

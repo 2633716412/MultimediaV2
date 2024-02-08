@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import Modules.Action;
@@ -56,16 +55,16 @@ public class CmdManager {
 
     public void Init(final Context context, final Action<String> OnIniEnd) {
         //Handler handler=new Handler();
-        final SPUnit spUnit = new SPUnit(Paras.appContext);
-        final DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
+        Paras.spUnit = new SPUnit(Paras.appContext);
+        Paras.deviceData = Paras.spUnit.Get("DeviceData", DeviceData.class);
         Paras.volume = 100;
         fileUnitDef = new FileUnitDef();
-        Paras.name = deviceData.getDevice_name();
+        Paras.name = Paras.deviceData.getDevice_name();
         Paras.cacheServer = CacheServerFactory.Get(context);
-        Paras.devType=deviceData.device_type;
+        Paras.devType=Paras.deviceData.device_type;
         //获取海康白名单
-        /*if(Objects.equals(deviceData.device_type, "hk")) {
-            LogHelper.Debug(deviceData.device_type+Paras.appContext.getPackageName());
+        /*if(Objects.equals(Paras.deviceData.device_type, "hk")) {
+            LogHelper.Debug(Paras.deviceData.device_type+Paras.appContext.getPackageName());
             int state=InfoUtilApi.setWhiteListState(true);
             if(state==0) {
                 LogHelper.Debug("海康白名单功能开启成功");
@@ -78,7 +77,7 @@ public class CmdManager {
             LogHelper.Debug("是否在白名单"+isWhite);
         }*/
         //isIgnoringBatteryOptimizations();
-        deviceData.setMac(MacUnit.GetMac(context));
+        Paras.deviceData.setMac(MacUnit.GetMac(context));
         Paras.powerManager = PowerManagerFactory.Get();
 
         //保存设备信息
@@ -89,14 +88,14 @@ public class CmdManager {
                 while (!isStopped) {
                     try {
                         JSONObject jsonObject=new JSONObject();
-                        jsonObject.put("device_name",deviceData.getDevice_name());
-                        jsonObject.put("device_ip",deviceData.getDevice_ip());
-                        jsonObject.put("mac",deviceData.getMac());
+                        jsonObject.put("device_name",Paras.deviceData.getDevice_name());
+                        jsonObject.put("device_ip",Paras.deviceData.getDevice_ip());
+                        jsonObject.put("mac",Paras.deviceData.getMac());
                         String androidNumStr="Android "+ Build.VERSION.RELEASE;
                         jsonObject.put("os",androidNumStr);
-                        jsonObject.put("sn",deviceData.getSn());
-                        jsonObject.put("org_id",deviceData.getOrgId());
-                        jsonObject.put("device_type",deviceData.getDevice_type());
+                        jsonObject.put("sn",Paras.deviceData.getSn());
+                        jsonObject.put("org_id",Paras.deviceData.getOrgId());
+                        jsonObject.put("device_type",Paras.deviceData.getDevice_type());
                         jsonObject.put("version",NetWorkUtils.getVersionName(Paras.appContext));
                         String jsonStr="";
                         try {
@@ -114,8 +113,9 @@ public class CmdManager {
                             if(!res) {
                                 LogHelper.Error("保存失败:入参"+jsonObject+"出参："+jsonStr);
                             } else {
-                                deviceData.setId(object.getLong("data"));
-                                spUnit.Set("DeviceData",deviceData);
+                                Paras.deviceData.setId(object.getLong("data"));
+                                Paras.spUnit.Set("Paras.deviceData",Paras.deviceData);
+                                LogHelper.Debug("保存设备");
                             }
                         }
                     } catch (Exception e) {
@@ -131,14 +131,14 @@ public class CmdManager {
             }
         };
         // 检查线程池是否已经终止
-        if (Paras.executor.isTerminated()) {
+        /*if (Paras.executor.isTerminated()) {
             // 创建一个新的线程池
             Paras.executor = Executors.newScheduledThreadPool(10);
-        }
+        }*/
         Paras.executor.execute(saveDeviceTask);
 
         //设置当前时间的同时，设置开关机时间
-        Paras.powerManager.SetTime(deviceData.osTimes);
+        Paras.powerManager.SetTime(Paras.deviceData.osTimes);
         //心跳子线程
         /*Paras.heartThread=new MyThread();
         Paras.heartThread.start();*/
@@ -151,7 +151,7 @@ public class CmdManager {
                     //更新心跳时间
                     Long device_status=Paras.powerManager.IsOpen()?0L:1L;
                     JSONObject updateObject=new JSONObject();
-                    updateObject.put("sn",deviceData.getSn());
+                    updateObject.put("sn",Paras.deviceData.getSn());
                     updateObject.put("is_record",1);
                     updateObject.put("device_status",device_status);
                     if (Paras.update_num==0) {
@@ -164,8 +164,6 @@ public class CmdManager {
                             }
 
                         } catch (Exception e) {
-                                    /*LogHelper.Error("更新心跳时间异常："+e);
-                                    Paras.msgManager.SendMsg("网络连接异常");*/
                             LogHelper.Error("更新心跳时间异常："+e);
                             Paras.msgManager.SendMsg("网络连接异常");
                             Paras.updateProgram=true;
@@ -199,7 +197,8 @@ public class CmdManager {
                     }
                     try {
                         if(NetWorkUtils.isNetworkAvailable(Paras.appContext)) {
-                            jsonStr= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getCmd"+"?sn="+deviceData.getSn());
+                            String url=Paras.mulAPIAddr + "/media/third/getCmd"+"?sn="+Paras.deviceData.getSn()+"&result="+Paras.material_finish;
+                            jsonStr= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getCmd"+"?sn="+Paras.deviceData.getSn()+"&result="+Paras.material_finish);
                         }
                     } catch (Exception e) {
                         LogHelper.Error("获取命令异常："+e);
@@ -220,6 +219,7 @@ public class CmdManager {
                                 case "1001":
                                     LogHelper.Debug("下发节目");
                                     Paras.updateProgram=true;
+                                    Paras.programEndDate = new Date();
                                     Paras.underUrl="";
                                     Paras.programUrl="";
                                     break;
@@ -295,7 +295,7 @@ public class CmdManager {
                                         base64Str = Base64FileUtil.encodeBase64File(picPath);
                                     }
                                     JSONObject uploadObject=new JSONObject();
-                                    uploadObject.put("device_id",deviceData.getId());
+                                    uploadObject.put("device_id",Paras.deviceData.getId());
                                     uploadObject.put("fileFormat",".jpg");
                                     uploadObject.put("base64Str",base64Str);
                                     String res = HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/uploadFile",uploadObject.toString());
@@ -314,12 +314,13 @@ public class CmdManager {
                                     Paras.msgManager.SendMsg("设置音量 = " + Paras.volume);
                                     break;
                                 case "1007":
-                                    deviceData.setDevice_name(contentObject.getString("DeviceName"));
-                                    spUnit.Set("DeviceData",deviceData);
+                                    Paras.deviceData.setDevice_name(contentObject.getString("DeviceName"));
+                                    Paras.spUnit.Set("Paras.deviceData",Paras.deviceData);
                                     break;
                                 case "1008":
                                     try {
                                         Paras.msgManager.SendMsg("准备更新程序...");
+                                        LogHelper.Debug("准备更新程序");
                                         int endIndex=Paras.mulAPIAddr.lastIndexOf("/");
                                         String url=Paras.mulAPIAddr.substring(0,endIndex);
                                         JSONObject finalContentObject = contentObject;
@@ -380,16 +381,16 @@ public class CmdManager {
                                             dto.setClose_min(Integer.parseInt(endTime.get(1)));
                                             list.add(dto);
                                         }
-                                        deviceData.setOsTimes(list);
+                                        Paras.deviceData.setOsTimes(list);
                                         Paras.powerManager.SetTime(list);
-                                        spUnit.Set("DeviceData",deviceData);
+                                        Paras.spUnit.Set("Paras.deviceData",Paras.deviceData);
                                     }
                                     break;
                                 case "1011":
                                     LogHelper.Debug("开始同步时间");
                                     Paras.powerManager.setSystemTime(Paras.appContext);
                                     Date startTime=new Date();
-                                    String serverStr= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getTime"+"?device_id="+deviceData.getId());
+                                    String serverStr= HttpUnitFactory.Get().Get(Paras.mulAPIAddr + "/media/third/getTime"+"?device_id="+Paras.deviceData.getId());
                                     Date endTime=new Date();
                                     JSONObject obj= new JSONObject(serverStr);
                                     JSONObject dataObject = obj.getJSONObject("data");
@@ -412,7 +413,7 @@ public class CmdManager {
                                     }
                                     String logContent=sb.toString();
                                     JSONObject logObject=new JSONObject();
-                                    logObject.put("terminal_id",deviceData.getId());
+                                    logObject.put("terminal_id",Paras.deviceData.getId());
                                     logObject.put("content",logContent);
                                     String result = HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/uploadLog",logObject.toString());
                                     JSONObject resultObj= new JSONObject(result);
@@ -441,8 +442,8 @@ public class CmdManager {
                                     break;
                                 case "1015":
                                     String stopUSB=contentObject.getString("enable");
-                                    deviceData.setStopUSB(stopUSB);
-                                    spUnit.Set("DeviceData",deviceData);
+                                    Paras.deviceData.setStopUSB(stopUSB);
+                                    Paras.spUnit.Set("Paras.deviceData",Paras.deviceData);
                                     boolean offOrOn=stopUSB.equals("N");
                                     Paras.powerManager.StopUSB(offOrOn);
                                                 /*Process p = Runtime.getRuntime().exec("su");
@@ -468,17 +469,17 @@ public class CmdManager {
                                                 break;*/
                                 case "1017":
                                     int streamType=contentObject.getInt("streamType");
-                                    deviceData.setStream_type(streamType);
-                                    spUnit.Set("DeviceData",deviceData);
+                                    Paras.deviceData.setStream_type(streamType);
+                                    Paras.spUnit.Set("Paras.deviceData",Paras.deviceData);
                                     Paras.textSpeaker2=new TextSpeaker2(Paras.appContext);
                                     LogHelper.Debug("语音类型调整为："+streamType);
                                     break;
                                 case "1018":
                                     String enable=contentObject.getString("enable");
                                     int screenTime=contentObject.getInt("ShutScreenTime");
-                                    deviceData.setScreenEnable(enable);
-                                    deviceData.setScreenTime(screenTime);
-                                    spUnit.Set("DeviceData",deviceData);
+                                    Paras.deviceData.setScreenEnable(enable);
+                                    Paras.deviceData.setScreenTime(screenTime);
+                                    Paras.spUnit.Set("Paras.deviceData",Paras.deviceData);
                                     LogHelper.Debug("是否开启自动截屏："+enable);
                                     break;
                                 case "1033":
@@ -507,16 +508,7 @@ public class CmdManager {
 
             }
         };
-        Paras.executor.scheduleAtFixedRate(heartTask,5,1, TimeUnit.SECONDS);
-        /*if(!Paras.hasRun[0]) {
-            pollingUtil.startPolling(task,Paras.heart_time*1000,true);
-            Paras.hasRun[0]=true;
-        }*/
-        /*MyThread myThread=new MyThread();
-        if(!Paras.hasRun[0]) {
-            pollingUtil.startPolling(myThread,Paras.heart_time*1000,true);
-            Paras.hasRun[0]=true;
-        }*/
+        Paras.executor.scheduleAtFixedRate(heartTask,5000,1500, TimeUnit.MILLISECONDS);
         //定时开关机监测
         Runnable listenTask=new Runnable() {
             @Override
@@ -567,7 +559,7 @@ public class CmdManager {
                     }
                     String logContent=sb.toString();
                     JSONObject logObject=new JSONObject();
-                    logObject.put("terminal_id",deviceData.getId());
+                    logObject.put("terminal_id",Paras.deviceData.getId());
                     logObject.put("content",logContent);
                     String result = HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/uploadLog",logObject.toString());
                     JSONObject resultObj= new JSONObject(result);
@@ -603,8 +595,8 @@ public class CmdManager {
                         try {
                             //Thread.sleep(5000);
                             SPUnit spUnit = new SPUnit(Paras.appContext);
-                            DeviceData deviceData = spUnit.Get("DeviceData", DeviceData.class);
-                            if(deviceData.getScreenEnable().equals("Y")) {
+                            Paras.deviceData = spUnit.Get("Paras.deviceData", DeviceData.class);
+                            if(Paras.deviceData.getScreenEnable().equals("Y")) {
                                 LogHelper.Debug("截屏开始");
                                 String base64Str="";
                                 String picPath=Paras.appContext.getExternalFilesDir("nf").getPath();
@@ -636,7 +628,7 @@ public class CmdManager {
                                     base64Str = Base64FileUtil.encodeBase64File(picPath);
                                 }
                                 JSONObject uploadObject=new JSONObject();
-                                uploadObject.put("device_id",deviceData.getId());
+                                uploadObject.put("device_id",Paras.deviceData.getId());
                                 uploadObject.put("fileFormat",".jpg");
                                 uploadObject.put("base64Str",base64Str);
                                 String res = HttpUnitFactory.Get().Post(Paras.mulAPIAddr + "/media/third/uploadFile",uploadObject.toString());
@@ -655,7 +647,7 @@ public class CmdManager {
                 },"shutChildThread").start();
             }
         };
-        Paras.executor.scheduleAtFixedRate(shutTask,30,deviceData.getScreenTime()* 60000L, TimeUnit.SECONDS);
+        Paras.executor.scheduleAtFixedRate(shutTask,30,Paras.deviceData.getScreenTime()* 60000L, TimeUnit.SECONDS);
     }
     public static void deleteFile(String path,String type) {
         File file = new File(path);

@@ -25,8 +25,10 @@ public class PowerManagerA2040_XiPin extends BasePowerManager{
     private DevicePolicyManager policyManager;
     Context context;
     boolean isOpen=true;
+    public  static zcapi zcApi=new zcapi();
     public PowerManagerA2040_XiPin(Context context) {
-
+        zcApi.getContext(Paras.appContext);
+        zcApi.setStatusBar(false);
         this.context = context;
     }
 
@@ -108,12 +110,8 @@ public class PowerManagerA2040_XiPin extends BasePowerManager{
     }
     @Override
     public void Install(String path) {
-        try {
-            zcapi zcApi=new zcapi();
-            zcApi.InstallApk(path,true);
-        } catch (Exception e){
-            LogHelper.Error("静默安装失败："+e.toString());
-        }
+        zcApi.getContext(Paras.appContext);
+        zcApi.InstallApk(path,true);
         /*File file=new File(path);
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
