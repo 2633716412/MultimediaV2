@@ -85,6 +85,7 @@ public class ShowActivity extends BaseActivity {
     public static CmdManager cmdManager;
     private InputStream fileInputStream = null;
     public static int sum=0;
+    private boolean isReload=false;
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -189,6 +190,9 @@ public class ShowActivity extends BaseActivity {
             }
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+
+                LogHelper.Debug("调用shouldInterceptRequest"+isReload);
+
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     if (VideoUrlParser.isVideoResource(request.getUrl().toString()) || VideoUrlParser.isPictureResource(request.getUrl().toString())) {
                         ResSize resSize = new ResSize();
@@ -206,6 +210,9 @@ public class ShowActivity extends BaseActivity {
                             int indexStart=urlStr.lastIndexOf("/");
                             String filename = urlStr.substring(indexStart); // 生成唯一的文件名
                             LogHelper.Debug("调用资源"+filename);
+                            LogHelper.Debug("1111111111111111111111111"+isReload);
+                            isReload = false;
+                            LogHelper.Debug("2222222222222222222222222"+isReload);
                             String fn=Paras.appContext.getExternalFilesDir("/nf").getPath();
                             File cacheFile = new File(fn, filename); // 缓存目录为应用的内部缓存目录
 
@@ -534,6 +541,9 @@ public class ShowActivity extends BaseActivity {
             LogHelper.Error("隐藏导航栏失败："+e.getMessage());
         }
         webView2.addJavascriptInterface(new MyJavaScriptInterface(), "Android");
+        //Paras.executor.scheduleAtFixedRate(reloadTask2,2,2, TimeUnit.MINUTES);
+        Paras.executor.scheduleAtFixedRate(reloadTask2,10,1, TimeUnit.SECONDS);
+        //Paras.executor.scheduleAtFixedRate(reloadTask,1,1, TimeUnit.SECONDS);
     }
     @Override
     public void onBackPressed() {
@@ -945,7 +955,9 @@ public class ShowActivity extends BaseActivity {
         @JavascriptInterface
         public void reload() {
             // 在这里执行你的点击操作
-            Paras.executor.schedule(reloadTask,10,TimeUnit.SECONDS);
+            LogHelper.Debug("开始reload");
+            isReload=true;
+            //Paras.executor.schedule(reloadTask,10,TimeUnit.SECONDS);
             /*ShowActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -970,8 +982,30 @@ public class ShowActivity extends BaseActivity {
             ShowActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    LogHelper.Debug("调用reload");
-                    webView2.loadUrl(Paras.programUrl+"&i="+sum);
+                    LogHelper.Debug("调用reload"+isReload);
+                    if(isReload) {
+                        LogHelper.Debug("reloading");
+                        webView2.reload();
+                    }
+                    //webView2.loadUrl(Paras.programUrl+"&i="+sum);
+                }
+            });
+        }
+    };
+    public Runnable reloadTask2 = new Runnable() {
+        @Override
+        public void run() {
+            ShowActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    LogHelper.Debug("定时reload"+isReload+System.currentTimeMillis());
+//                    webView2.reload();
+                    if(isReload) {
+                        webView2.reload();
+                        Paras.executor.schedule(reloadTask,5,TimeUnit.SECONDS);
+                        LogHelper.Debug("完成reload"+System.currentTimeMillis());
+                    }
+                    //webView2.loadUrl(Paras.programUrl+"&i="+sum);
                 }
             });
         }
