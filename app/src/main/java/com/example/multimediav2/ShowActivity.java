@@ -86,6 +86,8 @@ public class ShowActivity extends BaseActivity {
     private InputStream fileInputStream = null;
     public static int sum=0;
     private boolean isReload=false;
+    private boolean isReloading=false;
+    private String AppUrl ="";
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -187,6 +189,11 @@ public class ShowActivity extends BaseActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 pageFinish++;
+                LogHelper.Debug("url:"+webView2.getUrl());
+                if(webView2.getUrl().contains("192.168")) {
+                    isReload = false;
+                }
+                LogHelper.Debug("webView2加载完成"+isReload + pageFinish);
             }
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
@@ -195,6 +202,7 @@ public class ShowActivity extends BaseActivity {
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     if (VideoUrlParser.isVideoResource(request.getUrl().toString()) || VideoUrlParser.isPictureResource(request.getUrl().toString())) {
+
                         ResSize resSize = new ResSize();
                         // 创建HTTP连接以发送HEAD请求
                         String urlStr = request.getUrl().toString();
@@ -210,12 +218,8 @@ public class ShowActivity extends BaseActivity {
                             int indexStart=urlStr.lastIndexOf("/");
                             String filename = urlStr.substring(indexStart); // 生成唯一的文件名
                             LogHelper.Debug("调用资源"+filename);
-                            LogHelper.Debug("1111111111111111111111111"+isReload);
-                            isReload = false;
-                            LogHelper.Debug("2222222222222222222222222"+isReload);
                             String fn=Paras.appContext.getExternalFilesDir("/nf").getPath();
                             File cacheFile = new File(fn, filename); // 缓存目录为应用的内部缓存目录
-
                             //判断本地文件是否存在且完整
                             if(cacheFile.isFile() && cacheFile.length() >= contentLength) {
                                 boolean hasItem = false;
@@ -322,8 +326,6 @@ public class ShowActivity extends BaseActivity {
                                 fileOutputStream.close(); // 关闭FileOutputStream
                                 connection.disconnect();//关闭连接*/
                             }
-
-
                             //只从本地加载
                         /*if (VideoUrlParser.isVideoResource(request.getUrl().toString())) {
                             // 如果是视频资源，尝试从缓存加载
@@ -542,7 +544,7 @@ public class ShowActivity extends BaseActivity {
         }
         webView2.addJavascriptInterface(new MyJavaScriptInterface(), "Android");
         //Paras.executor.scheduleAtFixedRate(reloadTask2,2,2, TimeUnit.MINUTES);
-        Paras.executor.scheduleAtFixedRate(reloadTask2,10,1, TimeUnit.SECONDS);
+        Paras.executor.scheduleAtFixedRate(reloadTask2,10,10, TimeUnit.SECONDS);
         //Paras.executor.scheduleAtFixedRate(reloadTask,1,1, TimeUnit.SECONDS);
     }
     @Override
@@ -729,6 +731,7 @@ public class ShowActivity extends BaseActivity {
                                         public void run() {
                                             try {
                                                 webView2.loadUrl(url.toString());
+                                                AppUrl=url.toString();
                                                 webView1.loadUrl(wvUrl.toString());
                                                 LogHelper.Debug("url："+url.toString());
                                                 LogHelper.Debug("wvUrl："+wvUrl.toString());
@@ -985,7 +988,9 @@ public class ShowActivity extends BaseActivity {
                     LogHelper.Debug("调用reload"+isReload);
                     if(isReload) {
                         LogHelper.Debug("reloading");
-                        webView2.reload();
+                        webView2.clearCache(true);
+//                        webView2.reload();
+                        webView2.loadUrl(AppUrl + "&i="+System.currentTimeMillis());
                     }
                     //webView2.loadUrl(Paras.programUrl+"&i="+sum);
                 }
@@ -1001,8 +1006,12 @@ public class ShowActivity extends BaseActivity {
                     LogHelper.Debug("定时reload"+isReload+System.currentTimeMillis());
 //                    webView2.reload();
                     if(isReload) {
-                        webView2.reload();
-                        Paras.executor.schedule(reloadTask,5,TimeUnit.SECONDS);
+                        isReload=false;
+                        webView2.clearCache(true);
+                        webView2.loadUrl("javascript:window.location.reload(true)");
+                        //webView2.reload();
+                        //webView2.loadUrl("http://www.baidu.com");
+                        //Paras.executor.schedule(reloadTask,10,TimeUnit.SECONDS);
                         LogHelper.Debug("完成reload"+System.currentTimeMillis());
                     }
                     //webView2.loadUrl(Paras.programUrl+"&i="+sum);
