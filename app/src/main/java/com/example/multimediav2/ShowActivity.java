@@ -87,6 +87,7 @@ public class ShowActivity extends BaseActivity {
     public static int sum=0;
     private boolean isReload=false;
     private boolean isReloading=false;
+    private int reloadNum=0;
     private String AppUrl ="";
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -190,15 +191,15 @@ public class ShowActivity extends BaseActivity {
             public void onPageFinished(WebView view, String url) {
                 pageFinish++;
                 LogHelper.Debug("url:"+webView2.getUrl());
-                if(webView2.getUrl().contains("192.168")) {
-                    isReload = false;
-                }
+//                if(webView2.getUrl().contains("192.168")) {
+//                    isReload = false;
+//                }
                 LogHelper.Debug("webView2加载完成"+isReload + pageFinish);
             }
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
 
-                LogHelper.Debug("调用shouldInterceptRequest"+isReload);
+//                LogHelper.Debug("调用shouldInterceptRequest"+isReload);
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     if (VideoUrlParser.isVideoResource(request.getUrl().toString()) || VideoUrlParser.isPictureResource(request.getUrl().toString())) {
@@ -218,6 +219,7 @@ public class ShowActivity extends BaseActivity {
                             int indexStart=urlStr.lastIndexOf("/");
                             String filename = urlStr.substring(indexStart); // 生成唯一的文件名
                             LogHelper.Debug("调用资源"+filename);
+                            isReloading = false;
                             String fn=Paras.appContext.getExternalFilesDir("/nf").getPath();
                             File cacheFile = new File(fn, filename); // 缓存目录为应用的内部缓存目录
                             //判断本地文件是否存在且完整
@@ -768,6 +770,14 @@ public class ShowActivity extends BaseActivity {
                     Date nowTime=new Date();
                     programCount++;
                     if(resList != null) {
+                        if(isReloading) {
+                            if (reloadNum > 4) {
+                                isReload = true;
+                                reloadNum = 0;
+                            } else {
+                                reloadNum++;
+                            }
+                        }
                         LogHelper.Debug("节目素材数"+Paras.material_count+"加载数量"+resList.size());
                         //判断节目素材是否加载完成
                         String fn=Paras.appContext.getExternalFilesDir("/nf/cache").getPath();
@@ -1008,10 +1018,11 @@ public class ShowActivity extends BaseActivity {
                     if(isReload) {
                         isReload=false;
                         webView2.clearCache(true);
-                        webView2.loadUrl("javascript:window.location.reload(true)");
+                        webView2.loadUrl("javascript:window.location.reload()");
                         //webView2.reload();
                         //webView2.loadUrl("http://www.baidu.com");
                         //Paras.executor.schedule(reloadTask,10,TimeUnit.SECONDS);
+                        isReloading = true;
                         LogHelper.Debug("完成reload"+System.currentTimeMillis());
                     }
                     //webView2.loadUrl(Paras.programUrl+"&i="+sum);
