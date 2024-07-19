@@ -86,7 +86,6 @@ public class ShowActivity extends BaseActivity {
     private InputStream fileInputStream = null;
     public static int sum=0;
     private boolean isReload=false;
-    private boolean isReloading=false;
     private int reloadNum=0;
     private String AppUrl ="";
     @SuppressLint("SetJavaScriptEnabled")
@@ -219,7 +218,6 @@ public class ShowActivity extends BaseActivity {
                             int indexStart=urlStr.lastIndexOf("/");
                             String filename = urlStr.substring(indexStart); // 生成唯一的文件名
                             LogHelper.Debug("调用资源"+filename);
-                            isReloading = false;
                             String fn=Paras.appContext.getExternalFilesDir("/nf").getPath();
                             File cacheFile = new File(fn, filename); // 缓存目录为应用的内部缓存目录
                             //判断本地文件是否存在且完整
@@ -411,7 +409,7 @@ public class ShowActivity extends BaseActivity {
         //webView2.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         //webSetting2.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         // 启用链接预览模式
-        /*webSetting2.setSupportMultipleWindows(true);
+        webSetting2.setSupportMultipleWindows(true);
         webSetting2.setJavaScriptCanOpenWindowsAutomatically(true);
         webSetting2.setLoadsImagesAutomatically(true);
         //webSetting2.setDomStorageEnabled(true);
@@ -420,12 +418,12 @@ public class ShowActivity extends BaseActivity {
         // 设置支持viewport属性，使得网页可以自适应屏幕宽度
         webSetting2.setUseWideViewPort(true);
         webSetting2.setLoadWithOverviewMode(true); // 缩放至屏幕大小
-        *//*if(Paras.devType.equals(Paras.HAI_KANG)) {
+        if(Paras.devType.equals(Paras.HAI_KANG)) {
             webSetting2.setDomStorageEnabled(false);
-            *//**//*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 webSetting2.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-            }*//**//*
-        }*//*
+            }
+        }
 
         //缓存
         webSetting2.setAppCacheEnabled(false);
@@ -438,7 +436,7 @@ public class ShowActivity extends BaseActivity {
         // 设置支持缩放，与系统浏览器一致
         webSetting2.setSupportZoom(true);
         webSetting2.setBuiltInZoomControls(true); // 显示缩放控件（对于API 11+）
-        webSetting2.setDisplayZoomControls(false); // 隐藏缩放控件（如果使用了自定义手势缩放则可添加）*/
+        webSetting2.setDisplayZoomControls(false); // 隐藏缩放控件（如果使用了自定义手势缩放则可添加）
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             webSetting2.setMediaPlaybackRequiresUserGesture(false);
         }
@@ -770,14 +768,6 @@ public class ShowActivity extends BaseActivity {
                     Date nowTime=new Date();
                     programCount++;
                     if(resList != null) {
-                        if(isReloading) {
-                            if (reloadNum > 4) {
-                                isReload = true;
-                                reloadNum = 0;
-                            } else {
-                                reloadNum++;
-                            }
-                        }
                         LogHelper.Debug("节目素材数"+Paras.material_count+"加载数量"+resList.size());
                         //判断节目素材是否加载完成
                         String fn=Paras.appContext.getExternalFilesDir("/nf/cache").getPath();
@@ -988,6 +978,20 @@ public class ShowActivity extends BaseActivity {
             });
             */
         }
+        @JavascriptInterface
+        public void clearCache() {
+            // 在这里执行你的点击操作
+            LogHelper.Debug("开始clearCache");
+            ShowActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+
+                    webView2.clearCache(true);
+                    LogHelper.Debug("clearCache完成");
+                }
+            });
+        }
+
     }
     public Runnable reloadTask = new Runnable() {
         @Override
@@ -1018,11 +1022,10 @@ public class ShowActivity extends BaseActivity {
                     if(isReload) {
                         isReload=false;
                         webView2.clearCache(true);
-                        webView2.loadUrl("javascript:window.location.reload()");
+                        webView2.loadUrl("javascript:window.location.reload(true)");
                         //webView2.reload();
                         //webView2.loadUrl("http://www.baidu.com");
                         //Paras.executor.schedule(reloadTask,10,TimeUnit.SECONDS);
-                        isReloading = true;
                         LogHelper.Debug("完成reload"+System.currentTimeMillis());
                     }
                     //webView2.loadUrl(Paras.programUrl+"&i="+sum);

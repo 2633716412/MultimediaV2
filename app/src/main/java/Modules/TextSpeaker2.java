@@ -13,7 +13,7 @@ public class TextSpeaker2 implements TextToSpeech.OnInitListener {
 
     TextToSpeech toSpeech;
     AudioAttributes audioAttributes;
-    private boolean speechOver = true;
+    public static boolean speechOver = true;
     SPUnit spUnit = new SPUnit(Paras.appContext);
     DeviceData userData = spUnit.Get("DeviceData", DeviceData.class);
     public TextSpeaker2(Context context) {
@@ -54,14 +54,21 @@ public class TextSpeaker2 implements TextToSpeech.OnInitListener {
                     params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "param");
 
                     try {
-                        int res=toSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, params);
-                        LogHelper.Debug("res"+res);
-                        if (res == TextToSpeech.ERROR) {
-                            stopTTS();
-                            toSpeech=new TextToSpeech(Paras.appContext,TextSpeaker2.this);
-                            Thread.sleep(3000);
+
+                        if(speechOver) {
+                            int res=toSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, params);
+                            LogHelper.Debug("res"+res);
+                            if (res == TextToSpeech.ERROR) {
+                                stopTTS();
+                                toSpeech=new TextToSpeech(Paras.appContext,TextSpeaker2.this);
+                                Thread.sleep(3000);
+                                read(text);
+                            }
+                        } else {
+                            Thread.sleep(2000);
                             read(text);
                         }
+
                     } catch (Exception e) {
                         Paras.msgManager.SendMsg("播报失败："+e);
                         LogHelper.Error("语音返回错误"+e);

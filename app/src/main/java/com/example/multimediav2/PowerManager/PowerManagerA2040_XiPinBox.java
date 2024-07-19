@@ -41,7 +41,9 @@ public class PowerManagerA2040_XiPinBox extends BasePowerManager{
         policyManager=(DevicePolicyManager) Paras.appContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
         boolean admin = policyManager.isAdminActive(adminReceiver);
         if (!admin) {
-            checkAndTurnOnDeviceManager();
+            //checkAndTurnOnDeviceManager();
+        } else {
+            policyManager.removeActiveAdmin(adminReceiver);
         }
 
     }
